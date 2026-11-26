@@ -15,10 +15,18 @@ const FILE = path.join(__dirname, 'ornaments.json');
 // Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
 const ADMIN_KEY = process.env.ADMIN_KEY || '12345';
 const SETTINGS = path.join(__dirname, 'settings.json');
-const THEMES = ['classic', 't3d', 'neon'];
-let title = 'Merry Christmas', theme = 'classic';
-try { const st = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')); title = st.title || title; if (THEMES.includes(st.theme)) theme = st.theme; } catch (e) {}
-const saveSettings = () => fs.writeFile(SETTINGS, JSON.stringify({ title, theme }), () => {});
+const THEMES = ['classic', 't3d', 'neon', 'real'];
+const AUTO_MS = +process.env.AUTO_MS || 60000; // auto mode: switch tree every minute
+let title = 'Merry Christmas', theme = 'classic', auto = false, autoTimer = null;
+try { const st = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')); title = st.title || title; if (THEMES.includes(st.theme)) theme = st.theme; auto = !!st.auto; } catch (e) {}
+const saveSettings = () => fs.writeFile(SETTINGS, JSON.stringify({ title, theme, auto }), () => {});
+function startAuto() {
+  clearInterval(autoTimer);
+  if (auto) autoTimer = setInterval(() => {
+    theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+    saveSettings(); io.emit('theme', theme);
+  }, AUTO_MS);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +65,7 @@ function save() {
 io.on('connection', (socket) => {
   socket.emit('title', title);
   socket.emit('theme', theme);
+  socket.emit('auto', auto);
   socket.emit('history', list);
   let last = 0;
   socket.on('ornament', (m, ack) => {
@@ -98,12 +107,17 @@ io.on('connection', (socket) => {
     if (!socket.data.admin || !THEMES.includes(t)) return;
     theme = t; saveSettings(); io.emit('theme', theme);
   });
+  socket.on('admin:auto', (v) => {
+    if (!socket.data.admin) return;
+    auto = !!v; saveSettings(); startAuto(); io.emit('auto', auto);
+  });
   socket.on('admin:clear', () => {
     if (!socket.data.admin) return;
     list = []; save(); io.emit('clear');
   });
 });
 
+startAuto();
 server.listen(PORT, () => {
   const base = publicURL();
   console.log(`\n  Projector (admin):  ${base}/#display`);
