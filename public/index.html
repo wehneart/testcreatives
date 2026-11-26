@@ -83,10 +83,10 @@ body.notree #display{background:#000}
 .treebox{position:relative;z-index:2;height:94%;aspect-ratio:1000/1200;max-width:100%}
 .treebox>svg,.treebox>canvas{position:absolute;inset:0;width:100%;height:100%;transition:opacity .8s}
 body.notree .treebox>svg,body.notree .treebox>canvas{opacity:0}
-#neonTree,#t3d{display:none}
+#t3d{display:none}
 body[data-theme=neon] #classicTree,body[data-theme=t3d] #classicTree{display:none}
-body[data-theme=neon] #neonTree,body[data-theme=t3d] #t3d{display:block}
-body[data-theme=t3d] .orn{animation:none;transform:translate(-50%,-50%)}
+body[data-theme=neon] #t3d,body[data-theme=t3d] #t3d{display:block}
+body[data-theme=t3d] .orn,body[data-theme=neon] .orn{animation:none;transform:translate(-50%,-50%)}
 body[data-theme=neon] #display{background:radial-gradient(ellipse at 50% 28%,#4a1170 0%,#1a0633 50%,#06010f 100%)}
 body[data-theme=neon].notree #display{background:#000}
 body[data-theme=neon] .title{color:#ffd1f1;font-family:system-ui,sans-serif;font-style:normal;font-weight:300;letter-spacing:.18em;text-transform:uppercase;transform:none;text-shadow:0 0 6px #ff2a6d,0 0 22px #ff2a6d,0 0 48px #b026ff}
@@ -234,30 +234,6 @@ body.removing .orn:hover img{outline:3px dashed var(--red);outline-offset:4px;bo
       <g filter="url(#glow)"><path d="M500 36 l17 36 40 5 -29 28 7 40 -35 -19 -35 19 7 -40 -29 -28 40 -5z" fill="#f5cf6a"/></g>
       <path d="M500 40 l15 32 35 5 -25 24 6 35 -31 -17 -31 17 6 -35 -25 -24 35 -5z" fill="#ffe7a3"/>
     </svg>
-    <svg id="neonTree" viewBox="0 0 1000 1200" aria-hidden="true">
-      <defs>
-        <filter id="ng" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="ngs" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <linearGradient id="nfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2a6d" stop-opacity=".28"/><stop offset="1" stop-color="#7b2ff7" stop-opacity=".06"/></linearGradient>
-        <radialGradient id="nhalo"><stop offset="0" stop-color="#ff2a6d" stop-opacity=".38"/><stop offset=".6" stop-color="#b026ff" stop-opacity=".12"/><stop offset="1" stop-color="#b026ff" stop-opacity="0"/></radialGradient>
-        <linearGradient id="nfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2a6d" stop-opacity=".5"/><stop offset="1" stop-color="#ff2a6d" stop-opacity="0"/></linearGradient>
-      </defs>
-      <ellipse cx="500" cy="620" rx="480" ry="600" fill="url(#nhalo)"/>
-      <g fill="url(#nfill)" stroke="#ff4fa3" stroke-width="4" stroke-linejoin="round" filter="url(#ng)">
-        <path d="M500 95 L330 390 Q500 355 670 390 Z"/>
-        <path d="M500 250 L250 630 Q500 580 750 630 Z"/>
-        <path d="M500 420 L170 890 Q500 830 830 890 Z"/>
-        <path d="M500 600 L100 1070 Q500 1000 900 1070 Z"/>
-      </g>
-      <g fill="none" stroke="#05d9e8" stroke-width="3" stroke-linecap="round" filter="url(#ng)" opacity=".9">
-        <path d="M352 352 Q500 400 645 345"/><path d="M285 575 Q500 640 715 570"/><path d="M215 825 Q500 905 785 815"/><path d="M150 1010 Q500 1090 850 1000"/>
-        <rect x="455" y="1062" width="90" height="88" rx="6"/>
-      </g>
-      <g id="neonDots"></g>
-      <path d="M100 1160 H900" stroke="#b026ff" stroke-width="3" filter="url(#ng)" opacity=".8"/>
-      <path d="M100 1070 L900 1070 L960 1200 L40 1200 Z" fill="url(#nfloor)" opacity=".25"/>
-      <g filter="url(#ng)"><path d="M500 40 l15 32 35 5 -25 24 6 35 -31 -17 -31 17 6 -35 -25 -24 35 -5z" fill="none" stroke="#05d9e8" stroke-width="5" stroke-linejoin="round"/></g>
-    </svg>
     <canvas id="t3d" aria-hidden="true"></canvas>
   </div>
   <div class="qr" id="qrBox"><div id="qr"></div><p>Scan &amp; decorate<br>the tree!</p><small id="qrUrl"></small></div>
@@ -346,10 +322,6 @@ const Display=(()=>{
   for(let i=0;i<46;i++){const y=160+Math.random()*880,hw=410*(y-90)/990*.92,x=500+(Math.random()*2-1)*hw;
     h+=glowDot(x,y,4+Math.random()*9,cols[i%4]);}
   bk.innerHTML=h;
-  let nh='';const ncols=['#05d9e8','#ff4fa3','#ffd1f1','#b026ff'];
-  for(let i=0;i<40;i++){const y=170+Math.random()*860,hw=400*(y-90)/990*.9,x=500+(Math.random()*2-1)*hw;
-    nh+=glowDot(x,y,3+Math.random()*5,ncols[i%4]);}
-  $('neonDots').innerHTML=nh;
   function inside(){const y=.2+Math.random()*.62;const hw=.4*(y-.1)/.74;return[.5+(Math.random()*2-1)*hw*.92,y];}
   function slot(){let best=null,bd=-1;for(let i=0;i<50;i++){const p=inside();let d=1;
     for(const o of list)d=Math.min(d,Math.hypot(o.x-p[0],(o.y-p[1])*1.2));if(d>bd){bd=d;best=p;}if(d>.09)break;}return best;}
@@ -366,7 +338,7 @@ const Display=(()=>{
     inner.appendChild(img);sc.appendChild(inner);el.appendChild(sc);box.appendChild(el);
     const u=Math.min(.96,Math.max(.07,(y-TOP)/SPAN)),th=(nAdded++)*2.39996+Math.random()*.4;
     const o={id:msg.id,x,y,el,sc,u,th};list.push(o);countEl.textContent=list.length;
-    if(document.body.dataset.theme==='t3d')place3(o);
+    if(document.body.dataset.theme==='t3d'||document.body.dataset.theme==='neon')place3(o);
     el.addEventListener('click',()=>{if(document.body.classList.contains('removing'))Admin.remove(o.id,o);});
   }
   /* ---- 3D rotating tree ---- */
@@ -379,6 +351,40 @@ const Display=(()=>{
   for(let i=0;i<340;i++){const t=i/340;PTS.push({k:1,u:.06+t*.92,th:t*6.2832*5.5,rr:1,c:'#f5cf6a',s:1.5});}
   for(let i=0;i<85;i++)PTS.push({k:2,u:.08+Math.pow(Math.random(),.8)*.9,th:Math.random()*6.2832,rr:.95+Math.random()*.07,c:warm[i%4],s:3+Math.random()*3,ph:Math.random()*6.28});
   function proj(u,th,rr){const a=th+rot,z=Math.cos(a);return{x:.5+RAD*u*rr*Math.sin(a),y:TOP+u*SPAN+z*.03*u,f:(z+1)/2};}
+  // neon balloon tree: stacked inflated tiers [center u, half-width (of box width), half-height (in u)]
+  const TIERS=[[.13,.10,.085],[.31,.175,.125],[.54,.255,.15],[.79,.335,.17]];
+  function surfR(u){let w=0;for(const[c,rx,ry]of TIERS){const d=(u-c)/ry;if(d>-1&&d<1)w=Math.max(w,rx*Math.sqrt(1-d*d));}return w;}
+  function projN(u,th,k){const a=th+rot,z=Math.cos(a);return{x:.5+surfR(u)*k*Math.sin(a),y:TOP+u*SPAN,f:(z+1)/2,z};}
+  function drawNeon(t){
+    c3.globalCompositeOperation='source-over';c3.globalAlpha=1;c3.clearRect(0,0,W3,H3);
+    const fl=c3.createRadialGradient(W3*.5,H3*.97,0,W3*.5,H3*.97,W3*.55);fl.addColorStop(0,'rgba(255,42,109,.35)');fl.addColorStop(1,'rgba(255,42,109,0)');c3.fillStyle=fl;c3.fillRect(0,H3*.7,W3,H3*.3);
+    c3.strokeStyle='#05d9e8';c3.lineWidth=3*dpr;c3.shadowColor='#05d9e8';c3.shadowBlur=14*dpr;
+    c3.strokeRect(W3*.46,H3*(TOP+SPAN*.955),W3*.08,H3*.075);c3.shadowBlur=0;
+    for(let i=TIERS.length-1;i>=0;i--){
+      const[c,rx,ry]=TIERS[i],cx=W3*.5,cy=H3*(TOP+c*SPAN),RX=rx*W3,RY=ry*SPAN*H3;
+      const g=c3.createRadialGradient(cx-RX*.32,cy-RY*.4,RX*.05,cx,cy,RX*1.05);
+      g.addColorStop(0,'#ff8fd3');g.addColorStop(.45,'#d0258f');g.addColorStop(.85,'#5b0f86');g.addColorStop(1,'#2a0848');
+      c3.fillStyle=g;c3.beginPath();c3.ellipse(cx,cy,RX,RY,0,0,6.2832);c3.fill();
+      // rotating balloon seams
+      c3.save();c3.beginPath();c3.ellipse(cx,cy,RX,RY,0,0,6.2832);c3.clip();
+      const n=9;for(let k=0;k<n;k++){const a=k*6.2832/n+rot+i*.35,z=Math.cos(a);if(z<=0)continue;
+        c3.strokeStyle=k%2?'rgba(5,217,232,'+(z*.75).toFixed(2)+')':'rgba(255,209,241,'+(z*.45).toFixed(2)+')';c3.lineWidth=(1.5+1.5*z)*dpr;
+        c3.beginPath();for(let j=0;j<=24;j++){const yy=-1+j/12,w=Math.sqrt(Math.max(0,1-yy*yy));const X=cx+RX*w*Math.sin(a),Y=cy+RY*yy;j?c3.lineTo(X,Y):c3.moveTo(X,Y);}c3.stroke();}
+      c3.restore();
+      c3.globalAlpha=.45;blob('#ffffff',.05,cx-RX*.38,cy-RY*.42,RX*.38);c3.globalAlpha=.8;blob('#ffffff',.3,cx-RX*.42,cy-RY*.5,RX*.07);c3.globalAlpha=1;
+      c3.strokeStyle='#ff4fa3';c3.lineWidth=3*dpr;c3.shadowColor='#ff2a6d';c3.shadowBlur=26*dpr;
+      c3.beginPath();c3.ellipse(cx,cy,RX,RY,0,0,6.2832);c3.stroke();c3.shadowBlur=0;
+    }
+    // cyan spiral garland + twinkling lights on the front side
+    c3.globalCompositeOperation='lighter';
+    for(let i=0;i<220;i++){const u=.05+i/220*.92,q=projN(u,i/220*6.2832*4.5,1.0);if(q.z<=.05)continue;
+      c3.globalAlpha=q.z*.9;blob('#05d9e8',.35,q.x*W3,q.y*H3,2.6*dpr*(.6+.6*q.z));}
+    for(const p of PTS){if(p.k!==2)continue;const q=projN(p.u,p.th,1.0);if(q.z<=0)continue;const tw=.5+.5*Math.sin(t*.0025+p.ph);
+      c3.globalAlpha=q.z*tw*.6;blob(p.ph>3?'#ff4fa3':'#ffd1f1',.05,q.x*W3,q.y*H3,p.s*dpr*3);c3.globalAlpha=q.z*tw;blob('#ffffff',.5,q.x*W3,q.y*H3,p.s*dpr*.8);}
+    c3.globalCompositeOperation='source-over';c3.globalAlpha=1;
+    const sx=W3*.5,sy=H3*(TOP-.005),sr=W3*.038;c3.strokeStyle='#05d9e8';c3.lineWidth=4*dpr;c3.shadowColor='#05d9e8';c3.shadowBlur=22*dpr;c3.lineJoin='round';
+    c3.beginPath();for(let k=0;k<10;k++){const rr=k%2?sr*.45:sr,an=-Math.PI/2+k*Math.PI/5;c3.lineTo(sx+Math.cos(an)*rr,sy+Math.sin(an)*rr);}c3.closePath();c3.stroke();c3.shadowBlur=0;
+  }
   function dot(x,y,r){c3.beginPath();c3.arc(x,y,r,0,6.2832);c3.fill();}
   const SPR={};function spr(col,hard){const k=col+hard;if(SPR[k])return SPR[k];const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');
     const gr=g.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,col);gr.addColorStop(hard,col);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,32,32);return SPR[k]=c;}
@@ -398,11 +404,11 @@ const Display=(()=>{
     c3.globalAlpha=.55;blob('#f5cf6a',.02,sx,sy,sr*3.2);c3.globalAlpha=1;c3.globalCompositeOperation='source-over';c3.fillStyle='#ffe7a3';
     c3.beginPath();for(let k=0;k<10;k++){const rr=k%2?sr*.45:sr,an=-Math.PI/2+k*Math.PI/5;c3.lineTo(sx+Math.cos(an)*rr,sy+Math.sin(an)*rr);}c3.closePath();c3.fill();
   }
-  function place3(o){const q=proj(o.u,o.th,1.1);o.el.style.left=(q.x*100)+'%';o.el.style.top=(q.y*100)+'%';
-    o.el.style.zIndex=10+Math.round(q.f*100);o.el.style.opacity=(.28+.72*q.f).toFixed(2);o.sc.style.transform='scale('+(.7+.4*q.f).toFixed(3)+')';}
+  function place3(o){const neon=document.body.dataset.theme==='neon',q=neon?projN(o.u,o.th,1.08):proj(o.u,o.th,1.1);o.el.style.left=(q.x*100)+'%';o.el.style.top=(q.y*100)+'%';
+    o.el.style.zIndex=10+Math.round(q.f*100);o.el.style.opacity=(neon?Math.min(1,Math.max(0,(q.f-.38)/.3)):.28+.72*q.f).toFixed(2);o.sc.style.transform='scale('+(.7+.4*q.f).toFixed(3)+')';}
   function place2(o){o.el.style.left=o.x*100+'%';o.el.style.top=o.y*100+'%';o.el.style.zIndex='';o.el.style.opacity='';o.sc.style.transform='';}
-  function loop(t){const dt=lastT?Math.min(.1,(t-lastT)/1000):0;lastT=t;rot+=dt*6.2832/40;draw3(t);list.forEach(place3);raf=requestAnimationFrame(loop);}
-  function onTheme(th){cancelAnimationFrame(raf);raf=0;lastT=0;if(th==='t3d'){size3();raf=requestAnimationFrame(loop);}else list.forEach(place2);}
+  function loop(t){const dt=lastT?Math.min(.1,(t-lastT)/1000):0;lastT=t;rot+=dt*6.2832/40;if(document.body.dataset.theme==='neon')drawNeon(t);else draw3(t);list.forEach(place3);raf=requestAnimationFrame(loop);}
+  function onTheme(th){cancelAnimationFrame(raf);raf=0;lastT=0;if(th==='t3d'||th==='neon'){size3();raf=requestAnimationFrame(loop);}else list.forEach(place2);}
   function remove(id,local){const i=list.findIndex(o=>(id&&o.id===id)||o===local);if(i<0)return;drop(list[i]);list.splice(i,1);countEl.textContent=list.length;}
   function clear(){list.forEach(drop);list=[];countEl.textContent=0;}
   if(bc)bc.addEventListener('message',e=>{if(e.data&&e.data.type==='ornament'&&view!=='phone'&&view!=='demo')add(e.data);});
