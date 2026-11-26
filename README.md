@@ -1,6 +1,6 @@
 # Decorate the Tree – interaktív karácsonyfa
 
-A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszínezi vagy rárajzol, majd felküldi a fára. A dísz azonnal megjelenik a kivetített fán. A közönségnek nem kell bejelentkeznie. A felület angol nyelvű.
+A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszínezi, rárajzol vagy arany/ezüst/színes csillámport szór rá, majd felküldi a fára. A dísz azonnal megjelenik a kivetített fán. A közönségnek nem kell bejelentkeznie. A felület angol nyelvű.
 
 ## Oldalak
 | Cím | Mire való |
@@ -17,6 +17,7 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
    - **Tree (T):** a rajzolt fa ki/be. Valódi fára vetítéskor kapcsold ki, ilyenkor fekete háttéren csak a díszek látszanak.
    - **QR (Q):** a QR-kód ki/be
    - **Remove mode (R):** ilyenkor egy díszre kattintva törlöd azt (moderálás)
+   - **Classic / 3D / Neon (1, 2, 3):** a fa típusa. *Classic:* elmosott, fénylő fa. *3D:* lassan körbeforgó fa, a díszek is körbejárnak vele. *Neon:* lila-rózsaszín, Blade Runner hangulat esővel. A váltás minden kijelzőn egyszerre történik.
    - **Edit title:** a „Merry Christmas” felirat átírása (pl. „Feliz Navidad”). Minden kijelzőn és telefonon azonnal frissül.
    - **Clear all:** az egész fa törlése (kétszer kell rákattintani)
 

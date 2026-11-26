@@ -15,8 +15,10 @@ const FILE = path.join(__dirname, 'ornaments.json');
 // Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
 const ADMIN_KEY = process.env.ADMIN_KEY || '12345';
 const SETTINGS = path.join(__dirname, 'settings.json');
-let title = 'Merry Christmas';
-try { title = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')).title || title; } catch (e) {}
+const THEMES = ['classic', 't3d', 'neon'];
+let title = 'Merry Christmas', theme = 'classic';
+try { const st = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')); title = st.title || title; if (THEMES.includes(st.theme)) theme = st.theme; } catch (e) {}
+const saveSettings = () => fs.writeFile(SETTINGS, JSON.stringify({ title, theme }), () => {});
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +56,7 @@ function save() {
 
 io.on('connection', (socket) => {
   socket.emit('title', title);
+  socket.emit('theme', theme);
   socket.emit('history', list);
   let last = 0;
   socket.on('ornament', (m, ack) => {
@@ -88,8 +91,12 @@ io.on('connection', (socket) => {
     t = t.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60);
     if (!t) return;
     title = t;
-    fs.writeFile(SETTINGS, JSON.stringify({ title }), () => {});
+    saveSettings();
     io.emit('title', title);
+  });
+  socket.on('admin:theme', (t) => {
+    if (!socket.data.admin || !THEMES.includes(t)) return;
+    theme = t; saveSettings(); io.emit('theme', theme);
   });
   socket.on('admin:clear', () => {
     if (!socket.data.admin) return;
