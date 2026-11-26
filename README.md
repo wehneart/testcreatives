@@ -6,7 +6,7 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
 | Cím | Mire való |
 |---|---|
 | `/#display` | **Kivetítő (admin, jelszóval):** teljes képernyős, élő fa, QR-kód, moderálás |
-| `/#make` | Díszkészítő telefonra (ide visz a QR-kód) |
+| `/#make` | Díszkészítő telefonra (ide visz a QR-kód); a végén opcionálisan név is megadható |
 | `/#tree` | Nyilvános, csak nézhető fa (pl. telefonon) |
 | `/` | Demó; telefonon automatikusan a díszkészítő jelenik meg |
 
@@ -17,8 +17,10 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
    - **Tree (T):** a rajzolt fa ki/be. Valódi fára vetítéskor kapcsold ki, ilyenkor fekete háttéren csak a díszek látszanak.
    - **QR (Q):** a QR-kód ki/be
    - **Remove mode (R):** ilyenkor egy díszre kattintva törlöd azt (moderálás)
-   - **Classic / 3D / Neon / Real / Burning / Burnt (1–6):** a fa típusa. *Classic:* elmosott, fénylő fa. *3D:* körbeforgó, spirálban feltekert arany fényfüzér-fa sötét, fénycsíkos folyosóban; a díszek is körbejárnak. *Real:* a fotóból kivágott valódi lucfenyő (public/real-tree.webp), az izzók a saját helyükön pislákolnak, kőudvaron. *Neon:* neontábla-stílusú fa téglafalon (rózsaszín cső, futófényes füzérek, hópelyhek, narancs csillag), lassan jobbra-balra fordul térben. A váltás minden kijelzőn egyszerre történik.
+   - **Classic / 3D / Neon / Real / Burning / Burnt / Cozy (1–7):** a fa típusa. *Classic:* elmosott, fénylő fa. *3D:* körbeforgó, spirálban feltekert arany fényfüzér-fa sötét, fénycsíkos folyosóban; a díszek is körbejárnak. *Real:* a fotóból kivágott valódi lucfenyő (public/real-tree.webp), az izzók a saját helyükön pislákolnak, kőudvaron. *Neon:* neontábla-stílusú fa téglafalon (rózsaszín cső, futófényes füzérek, hópelyhek, narancs csillag), lassan jobbra-balra fordul térben. A váltás minden kijelzőn egyszerre történik.
    - *Burning:* a fotóból kivágott díszített fa, a csúcsán élő (shaderes) tűz, megszenesedő, izzó koronával, parázzsal, füsttel; a fa lassan jobbra-balra fordul. *Burnt:* teljesen leégett fa 3D ágrendszerrel, kéreggel, izzó repedésekkel, égő gyertyákkal, füstcsíkokkal, hamuval; körbeforog.
+   - *Cozy:* játékszerű, bolyhos mentazöld 3D fa arany csillaggal, csillogó spirállal, arany sínen körbejáró kisvonattal, vörös szobában; a díszek alatt a beküldő neve látszik.
+   - **Forgatás húzással:** a 3D, Burnt és Cozy fa egérrel vagy ujjal elforgatható (a `/#tree` nézetben telefonon is).
    - **Auto (1 min) (A):** bekapcsolva percenként vált a következő fára, áttűnéssel. Minden kijelzőn egyszerre.
    - **Edit title:** a „Merry Christmas” felirat átírása (pl. „Feliz Navidad”). Minden kijelzőn és telefonon azonnal frissül.
    - **Clear all:** az egész fa törlése (kétszer kell rákattintani)

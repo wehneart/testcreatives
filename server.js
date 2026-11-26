@@ -16,7 +16,7 @@ const FILE = path.join(__dirname, 'ornaments.json');
 // Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
 const ADMIN_KEY = process.env.ADMIN_KEY || '12345';
 const SETTINGS = path.join(__dirname, 'settings.json');
-const THEMES = ['classic', 't3d', 'neon', 'real', 'burning', 'burnt'];
+const THEMES = ['classic', 't3d', 'neon', 'real', 'burning', 'burnt', 'cozy'];
 const AUTO_MS = +process.env.AUTO_MS || 60000; // auto mode: switch tree every minute
 let title = 'Merry Christmas', theme = 'classic', auto = false, autoTimer = null;
 try { const st = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')); title = st.title || title; if (THEMES.includes(st.theme)) theme = st.theme; auto = !!st.auto; } catch (e) {}
@@ -79,7 +79,8 @@ io.on('connection', (socket) => {
       && now - last > COOLDOWN_MS;
     if (!ok) { if (typeof ack === 'function') ack({ ok: false }); return; }
     last = now;
-    const o = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), img: m.img };
+    const name = typeof m.name === 'string' ? m.name.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 16) : '';
+    const o = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), img: m.img, name };
     list.push(o);
     if (list.length > MAX) io.to('viewers').emit('remove', list.shift().id);
     save();
