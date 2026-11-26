@@ -1,318 +1,389 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#123826">
-<title>Díszítsd a fát</title>
+<title>Decorate the Tree</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root{--bg:#123826;--bg2:#0b2419;--panel:#1a4a33;--cream:#f3e6c8;--red:#c8323c;--gold:#e7b84a;--sage:#8fb89a;--ink:#0b1f15}
+:root{--bg:#123826;--bg2:#0a1f15;--panel:#1a4a33;--cream:#f3e6c8;--red:#c8323c;--gold:#e7b84a;--ink:#0b1f15}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg2);color:var(--cream);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-body.demo{display:grid;grid-template-columns:minmax(320px,390px) 1fr;gap:24px;padding:24px}
-body.phone #display,body.display #phone{display:none}
-body.phone #phone{height:100%;border-radius:0}
-body.display #display{height:100%;border-radius:0}
-.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:6px}
 .script{font-family:Georgia,"Times New Roman",serif;font-style:italic}
+.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:6px}
+
+/* views */
+body[data-view=demo]{display:grid;grid-template-columns:minmax(320px,390px) 1fr;gap:24px;padding:24px}
+body[data-view=phone] #display,body[data-view=tree] #phone,body[data-view=display] #phone{display:none}
+body[data-view=phone] #phone,body[data-view=tree] #display,body[data-view=display] #display{height:100%;border-radius:0}
 
 /* ---------- PHONE ---------- */
 #phone{background:var(--bg);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;position:relative}
 #phone header{text-align:center}
 #phone header h1{font-size:26px;font-weight:400;color:var(--gold)}
-#phone header p{font-size:13px;opacity:.75;margin-top:2px}
-.shapes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.shapes button{background:var(--panel);border-radius:12px;padding:6px;aspect-ratio:1;display:grid;place-items:center;outline:2px solid transparent;transition:outline-color .15s,transform .15s}
-.shapes button.on{outline-color:var(--gold);transform:translateY(-2px)}
-.shapes canvas{width:100%;height:100%}
 .steps{display:flex;justify-content:center;gap:6px;margin-top:8px;font-size:12px}
 .steps span{padding:4px 10px;border-radius:999px;background:var(--panel);opacity:.55}
 .steps span.on{background:var(--gold);color:var(--ink);opacity:1;font-weight:600}
 .step{display:none;flex-direction:column;gap:14px}.step.on{display:flex}
 .lead{text-align:center;font-size:15px;opacity:.85}
 .hint{font-size:12px;opacity:.55;margin-top:6px}
-#s1 .shapes{grid-template-columns:repeat(2,1fr);gap:12px}
-#s1 .shapes button{padding:14px;display:flex;flex-direction:column;gap:6px;aspect-ratio:auto}
-#s1 .shapes button canvas{width:70%;height:auto;aspect-ratio:1}
-#s1 .shapes button span{font-size:14px}
+.shapes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.shapes button{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .15s}
+.shapes button:active{transform:scale(.96)}
+.shapes canvas{width:70%;aspect-ratio:1}
+.shapes span{font-size:14px}
+.board,.preview{background:var(--panel);border-radius:18px;aspect-ratio:1;position:relative;touch-action:none}
+.board canvas{width:100%;height:100%;display:block}
+.preview{display:grid;place-items:center}
+.preview img{width:72%;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
 .tabs{display:flex;background:var(--panel);border-radius:12px;padding:4px}
 .tab{flex:1;padding:9px;border-radius:9px;font-size:14px}.tab.on{background:var(--cream);color:var(--ink);font-weight:600}
-.preview{background:var(--panel);border-radius:18px;aspect-ratio:1;display:grid;place-items:center}
-.preview img{width:72%;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
-.ghost{padding:10px;font-size:14px;opacity:.8}
-.swap{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;z-index:6;display:none;align-items:center;gap:6px;background:var(--panel);color:var(--cream);border-radius:999px;padding:8px 12px;font-size:13px;min-height:40px}
-#display .swap{background:rgba(243,230,200,.12);backdrop-filter:blur(6px)}
-body.phone #phone .swap,body.display #display .swap{display:flex}
-body.dark #display .swap{opacity:.25}
-.board{background:var(--panel);border-radius:18px;aspect-ratio:1;position:relative;touch-action:none}
-.board canvas{width:100%;height:100%;display:block}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.sw{width:30px;height:30px;border-radius:50%;outline:2px solid transparent;outline-offset:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.sw{width:32px;height:32px;border-radius:50%;outline:2px solid transparent;outline-offset:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
 .sw.on{outline-color:var(--cream)}
 .sz{background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px}
 .sz.on{background:var(--cream);color:var(--ink)}
 .tools{display:flex;gap:8px}
 .tools button{flex:1;background:var(--panel);border-radius:12px;padding:10px;font-size:14px}
-.send{background:var(--gold)!important;color:var(--ink);font-weight:600;border-radius:14px;padding:14px;font-size:16px;width:100%}
-.done{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:30px;border-radius:inherit}
+.send{background:var(--gold);color:var(--ink);font-weight:600;border-radius:14px;padding:14px;font-size:16px;width:100%}
+.ghost{padding:10px;font-size:14px;opacity:.8;display:flex;align-items:center;justify-content:center;gap:6px}
+.done{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:30px;border-radius:inherit;z-index:5}
 .done.show{display:flex}
 .done img{width:55%;animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
 .done h2{font-size:28px;font-weight:400;color:var(--gold)}
+.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--cream);color:var(--ink);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:6;width:max-content;max-width:90%}
+.toast.show{opacity:1}
 @keyframes pop{from{transform:scale(.3) rotate(-15deg);opacity:0}}
 
+.swap{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;z-index:6;display:none;align-items:center;gap:6px;background:var(--panel);border-radius:999px;padding:8px 12px;font-size:13px;min-height:40px}
+#display .swap{background:rgba(243,230,200,.12);backdrop-filter:blur(6px)}
+body[data-view=phone] #phone .swap,body[data-view=tree] #display .swap{display:flex}
+
+body[data-view=phone] #phone{height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));gap:10px;overflow:hidden}
+body[data-view=phone] #phone header h1{font-size:22px}
+body[data-view=phone] .step{flex:1;min-height:0;gap:10px}
+body[data-view=phone] .shapes{flex:1;grid-auto-rows:1fr}
+body[data-view=phone] .shapes canvas{width:auto;height:60%;max-width:70%}
+body[data-view=phone] .board,body[data-view=phone] .preview{width:min(100%,46dvh);margin:0 auto;flex:none}
+body[data-view=phone] .send{margin-top:auto;min-height:52px}
+body[data-view=phone] .tools button,body[data-view=phone] .tab{min-height:44px}
+body[data-view=phone] .sw{width:38px;height:38px}
+body[data-view=phone] .sz{min-height:38px;padding:8px 14px}
+body[data-view=phone] .done{border-radius:0}
+
 /* ---------- DISPLAY ---------- */
-#display{background:radial-gradient(ellipse at 50% 35%,#16452f 0%,#0a2015 70%);border-radius:28px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
-body.dark #display{background:#000}
-.treebox{position:relative;height:96%;aspect-ratio:1000/1200;max-width:100%}
-.treebox svg{position:absolute;inset:0;width:100%;height:100%;transition:opacity .6s}
-body.dark .treebox svg{opacity:0}
-.title{position:absolute;top:3%;left:4%;font-size:clamp(22px,3.4vw,52px);color:var(--cream);transform:rotate(-6deg);z-index:3}
-body.dark .title,body.dark .meta{opacity:0}
-.meta{position:absolute;bottom:3%;right:3%;font-size:13px;opacity:.6;text-align:right;line-height:1.6;z-index:3}
-.qr{position:absolute;left:3%;bottom:3%;z-index:4;background:var(--cream);color:var(--ink);border-radius:16px;padding:12px;width:clamp(140px,15vw,230px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#display{background:radial-gradient(ellipse at 50% 40%,#123d29 0%,#08190f 72%);border-radius:28px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+body.notree #display{background:#000}
+.treebox{position:relative;height:94%;aspect-ratio:1000/1200;max-width:100%}
+.treebox>svg{position:absolute;inset:0;width:100%;height:100%;transition:opacity .8s}
+body.notree .treebox>svg{opacity:0}
+.title{position:absolute;top:3%;left:4%;font-size:clamp(22px,3.4vw,56px);color:var(--cream);transform:rotate(-6deg);z-index:3;text-shadow:0 0 24px rgba(231,184,74,.35);transition:opacity .6s}
+body.notree .title{opacity:0}
+.count{position:absolute;bottom:3%;right:3%;font-size:13px;opacity:.55;z-index:3}
+.bokeh{animation:tw var(--t,3s) ease-in-out var(--dl,0s) infinite alternate}
+@keyframes tw{from{opacity:.15}to{opacity:.95}}
+
+.orn{position:absolute;width:11.5%;z-index:2;transform:translate(-50%,-50%);animation:float var(--d,12s) ease-in-out var(--dl,0s) infinite alternate;transition:opacity 1s}
+.orn .in{position:relative;transform-origin:50% 0;animation:sway var(--s,4s) ease-in-out infinite alternate}
+.orn img{width:100%;display:block;animation:drop 1.6s cubic-bezier(.25,1.3,.4,1) both;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.orn .in::before{content:"";position:absolute;left:50%;top:-14%;width:1px;height:18%;background:rgba(243,230,200,.5)}
+.orn.new .in::after{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(circle,rgba(255,230,150,.6),transparent 65%);animation:glow 2.6s ease-out 1.3s both;pointer-events:none}
+.orn.gone{opacity:0}
+@keyframes drop{from{transform:translateY(-110vh) rotate(-25deg)}}
+@keyframes sway{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+@keyframes float{from{transform:translate(-50%,-50%)}to{transform:translate(calc(-50% + var(--dx,10%)),calc(-50% + var(--dy,8%)))}}
+@keyframes glow{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.7)}}
+@media (prefers-reduced-motion:reduce){.orn,.orn .in{animation:none}}
+
+.qr{position:absolute;left:3%;bottom:3%;z-index:4;background:var(--cream);color:var(--ink);border-radius:16px;padding:12px;width:clamp(140px,15vw,240px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);display:none}
+body[data-view=demo] .qr,body[data-view=display] .qr{display:block}
+body.noqr .qr{display:none!important}
 .qr #qr img,.qr #qr canvas{width:100%!important;height:auto!important;display:block}
 .qr p{font-size:14px;line-height:1.3;margin-top:8px;font-weight:600}
 .qr small{display:block;font-size:11px;opacity:.65;margin-top:4px;word-break:break-all}
-body.noqr .qr{display:none}
-@media (max-width:700px){.qr,#keys{display:none}.title{top:max(14px,env(safe-area-inset-top));font-size:22px}}
-.orn{position:absolute;width:11.5%;transform:translate(-50%,-50%);z-index:2;transition:opacity 1s}
-.orn img{width:100%;display:block;transform-origin:50% 4%;animation:drop 1.5s cubic-bezier(.25,1.3,.4,1) both,sway 3.6s ease-in-out 1.5s infinite alternate}
-.orn::before{content:"";position:absolute;left:50%;top:-14%;width:1px;height:18%;background:rgba(243,230,200,.55)}
-.orn.new::after{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(circle,rgba(255,230,150,.55),transparent 65%);animation:glow 2.4s ease-out 1.2s both;pointer-events:none}
-.orn.gone{opacity:0}
-@keyframes drop{from{transform:translateY(-110vh) rotate(-25deg)}}
-@keyframes sway{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
-@keyframes glow{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.6)}}
-.twinkle{animation:tw 2.2s ease-in-out infinite alternate}
-@keyframes tw{from{opacity:.25}to{opacity:1}}
-/* phone mode: one screen, big targets */
-body.phone #phone{height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));gap:10px;overflow:hidden}
-body.phone #phone header h1{font-size:22px}
-body.phone .step{flex:1;min-height:0;gap:10px}
-body.phone #s1 .shapes{flex:1;grid-auto-rows:1fr}
-body.phone #s1 .shapes button canvas{width:auto;height:60%;max-width:70%}
-body.phone .board,body.phone .preview{width:min(100%,46dvh);margin:0 auto;flex:none}
-body.phone .send{margin-top:auto;min-height:52px}
-body.phone .tools button,body.phone .tab{min-height:44px}
-body.phone .sw{width:38px;height:38px}
-body.phone .sz{min-height:38px;padding:8px 14px}
-body.phone .done{border-radius:0}
+
+/* admin */
+.admin{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:8;display:none;gap:6px;background:rgba(10,31,21,.85);backdrop-filter:blur(8px);padding:6px;border-radius:14px;transition:opacity .4s;flex-wrap:wrap;justify-content:center;max-width:95%}
+body[data-view=display] .admin,body[data-view=demo] .admin{display:flex}
+.admin button{padding:8px 12px;border-radius:10px;font-size:13px;background:rgba(243,230,200,.08)}
+.admin button.on{background:var(--cream);color:var(--ink)}
+.admin button.warn{background:var(--red)}
+body.idle .admin{opacity:0;pointer-events:none}
+body.idle[data-view=display]{cursor:none}
+body.removing .orn{cursor:crosshair}
+body.removing .orn:hover img{outline:3px dashed var(--red);outline-offset:4px;border-radius:8px}
+.login{position:absolute;inset:0;z-index:9;background:rgba(5,15,10,.92);display:none;align-items:center;justify-content:center}
+.login.show{display:flex}
+.login form{background:var(--bg);padding:28px;border-radius:20px;width:min(340px,90%);display:flex;flex-direction:column;gap:12px;text-align:center}
+.login h2{font-weight:400;color:var(--gold);font-size:26px}
+.login input{font:inherit;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(243,230,200,.3);background:var(--bg2);color:var(--cream);text-align:center}
+.login .err{color:#ff8c8c;font-size:13px;min-height:1em}
+@media (max-width:760px){body[data-view=demo]{grid-template-columns:1fr;grid-template-rows:auto 70vh;overflow:auto;padding:12px}}
+@media (max-width:700px){body[data-view=tree] .title{top:max(14px,env(safe-area-inset-top));font-size:22px}}
 </style>
 </head>
-<body class="demo">
+<body data-view="demo">
 
-<!-- ================= PHONE (controller) ================= -->
+<!-- ================= PHONE (ornament maker) ================= -->
 <section id="phone">
-  <button class="swap" data-go="kijelzo" aria-label="A fa megtekintése"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg><span>Fa</span></button>
+  <button class="swap" data-go="tree" aria-label="See the tree"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg><span>Tree</span></button>
   <header>
-    <h1 class="script">Boldog Karácsonyt</h1>
-    <div class="steps"><span data-s="1">1 · Forma</span><span data-s="2">2 · Díszítés</span><span data-s="3">3 · Fel a fára</span></div>
+    <h1 class="script">Merry Christmas</h1>
+    <div class="steps"><span data-s="1">1 · Shape</span><span data-s="2">2 · Decorate</span><span data-s="3">3 · Hang it</span></div>
   </header>
 
-  <!-- STEP 1: pick shape -->
   <div class="step" id="s1">
-    <p class="lead">Válaszd ki a díszed formáját</p>
+    <p class="lead">Choose your ornament</p>
     <div class="shapes" id="shapes"></div>
   </div>
 
-  <!-- STEP 2: customize -->
   <div class="step" id="s2">
     <div class="board"><canvas id="draw" width="600" height="600"></canvas></div>
-    <div class="tabs"><button class="tab on" data-t="color">Szín</button><button class="tab" data-t="pen">Rajz</button></div>
-    <div class="pane" id="p-color"><div class="lbl">A dísz színe</div><div class="row" id="base"></div></div>
-    <div class="pane" id="p-pen" hidden><div class="lbl">Toll színe és vastagsága</div><div class="row" id="pens"></div><p class="hint">Rajzolj ujjal a díszre</p></div>
-    <div class="tools"><button id="back1">← Forma</button><button id="undo">↶ Vissza</button><button id="clear">Törlés</button></div>
-    <button class="send" id="toPreview">Kész vagyok →</button>
+    <div class="tabs"><button class="tab on" data-t="color">Color</button><button class="tab" data-t="pen">Draw</button></div>
+    <div id="p-color"><div class="lbl">Ornament color</div><div class="row" id="base"></div></div>
+    <div id="p-pen" hidden><div class="lbl">Pen color &amp; size</div><div class="row" id="pens"></div><p class="hint">Draw on it with your finger</p></div>
+    <div class="tools"><button id="back1">← Shape</button><button id="undo">↶ Undo</button><button id="clear">Clear</button></div>
+    <button class="send" id="toPreview">I'm done →</button>
   </div>
 
-  <!-- STEP 3: preview + send -->
   <div class="step" id="s3">
-    <div class="preview"><img id="prevImg" alt="A díszed"></div>
-    <p class="lead">Így fog kinézni a fán</p>
-    <button class="send" id="send">Felküldöm a fára ✦</button>
-    <button class="ghost" id="back2">← Még módosítok</button>
+    <div class="preview"><img id="prevImg" alt="Your ornament"></div>
+    <p class="lead">This is how it will look on the tree</p>
+    <button class="send" id="send">Hang it on the tree ✦</button>
+    <button class="ghost" id="back2">← Keep editing</button>
   </div>
 
   <div class="done" id="done">
     <img id="doneImg" alt="">
-    <h2 class="script">Nézd a fát!</h2>
-    <p style="opacity:.75">A díszed már rajta lóg.</p>
-    <button class="send" id="again" style="width:auto;padding:12px 26px">Új díszt készítek</button>
-    <button class="ghost" data-go="kijelzo" style="display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg>A fa megtekintése</button>
+    <h2 class="script">Look at the tree!</h2>
+    <p style="opacity:.75">Your ornament is hanging there now.</p>
+    <button class="send" id="again" style="width:auto;padding:12px 26px">Make another one</button>
+    <button class="ghost" data-go="tree"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg>See the tree</button>
   </div>
+  <div class="toast" id="toast"></div>
 </section>
 
-<!-- ================= DISPLAY (projector output) ================= -->
+<!-- ================= DISPLAY (projector) ================= -->
 <section id="display">
-  <button class="swap" data-go="telefon" aria-label="Díszt készítek"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span>Díszt készítek</span></button>
-  <div class="title script">Boldog Karácsonyt</div>
+  <button class="swap" data-go="make" aria-label="Make an ornament"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span>Make an ornament</span></button>
+  <div class="admin" id="admin">
+    <button id="aFull">Fullscreen</button>
+    <button id="aTree" class="on">Tree</button>
+    <button id="aQr" class="on">QR</button>
+    <button id="aRemove">Remove mode</button>
+    <button id="aClear">Clear all</button>
+    <button id="aOut" hidden>Log out</button>
+  </div>
+  <div class="title script">Merry Christmas</div>
   <div class="treebox" id="tree">
     <svg viewBox="0 0 1000 1200" aria-hidden="true">
-      <g fill="none" stroke="#f3e6c8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity=".9">
-        <path d="M500 95 L330 380 Q500 350 670 380 Z" fill="#1f5a3c"/>
-        <path d="M500 250 L250 620 Q500 575 750 620 Z" fill="#1b5236"/>
-        <path d="M500 420 L170 880 Q500 820 830 880 Z" fill="#174a30"/>
-        <path d="M500 600 L100 1060 Q500 990 900 1060 Z" fill="#14432b"/>
-        <rect x="455" y="1040" width="90" height="110" rx="8" fill="#6b4a2b"/>
-        <path d="M330 380 Q500 420 670 380 M250 620 Q500 670 750 620 M170 880 Q500 940 830 880" stroke-dasharray="2 22" stroke-width="10" stroke="#e7b84a" class="twinkle"/>
+      <defs>
+        <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="16"/></filter>
+        <filter id="softer" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="40"/></filter>
+        <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+        <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c8f5f"/><stop offset=".6" stop-color="#1f5c3c"/><stop offset="1" stop-color="#123d28"/></linearGradient>
+        <radialGradient id="halo"><stop offset="0" stop-color="#e7b84a" stop-opacity=".45"/><stop offset="1" stop-color="#e7b84a" stop-opacity="0"/></radialGradient>
+      </defs>
+      <ellipse cx="500" cy="640" rx="470" ry="560" fill="url(#halo)" opacity=".35"/>
+      <g filter="url(#softer)" fill="#2b7a4e" opacity=".55"><path d="M500 90 L80 1080 L920 1080 Z"/></g>
+      <g filter="url(#soft)" fill="url(#tg)">
+        <path d="M500 95 L330 390 Q500 355 670 390 Z"/>
+        <path d="M500 250 L250 630 Q500 580 750 630 Z"/>
+        <path d="M500 420 L170 890 Q500 830 830 890 Z"/>
+        <path d="M500 600 L100 1070 Q500 1000 900 1070 Z"/>
+        <rect x="455" y="1050" width="90" height="100" rx="10" fill="#5a3e24"/>
       </g>
-      <path d="M500 40 l17 36 40 5 -29 28 7 40 -35 -19 -35 19 7 -40 -29 -28 40 -5z" fill="#e7b84a" stroke="#f3e6c8" stroke-width="4"/>
+      <g id="bokeh" filter="url(#glow)"></g>
+      <g filter="url(#glow)"><path d="M500 36 l17 36 40 5 -29 28 7 40 -35 -19 -35 19 7 -40 -29 -28 40 -5z" fill="#f5cf6a"/></g>
+      <path d="M500 40 l15 32 35 5 -25 24 6 35 -31 -17 -31 17 6 -35 -25 -24 35 -5z" fill="#ffe7a3"/>
     </svg>
   </div>
-  <div class="qr" id="qrBox"><div id="qr"></div><p>Szkenneld be,<br>és díszítsd fel a fát!</p><small id="qrUrl"></small></div>
-  <div class="meta"><span id="count">0</span> dísz a fán<br><span id="keys">T: fa ki/be · Q: QR ki/be · F: teljes képernyő</span></div>
+  <div class="qr" id="qrBox"><div id="qr"></div><p>Scan &amp; decorate<br>the tree!</p><small id="qrUrl"></small></div>
+  <div class="count"><span id="count">0</span> ornaments on the tree</div>
+  <div class="login" id="login">
+    <form id="loginForm">
+      <h2 class="script">Projector</h2>
+      <p style="opacity:.7;font-size:14px">Enter the admin password to open the live display.</p>
+      <input id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
+      <button class="send" type="submit">Open display</button>
+      <div class="err" id="err"></div>
+    </form>
+  </div>
 </section>
 
 <script>
-(function(){
-const params=new URLSearchParams(location.search);
-const h=location.hash.slice(1);
-let mode=(h==='telefon'||params.get('mode')==='phone')?'phone':(h==='kijelzo'||params.get('mode')==='display')?'display':null;
-if(!mode&&matchMedia('(max-width:700px)').matches)mode='phone';
+{
+const $=id=>document.getElementById(id);
+const ROUTES={make:'phone',telefon:'phone',tree:'tree',display:'display',kijelzo:'display'};
+let view=ROUTES[location.hash.slice(1)]||null;
+if(!view&&matchMedia('(max-width:700px)').matches)view='phone';
+view=view||'demo';
+document.body.dataset.view=view;
 addEventListener('hashchange',()=>location.reload());
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.go;}));
 const ART_URL='https://claude.ai/artifact/JDdhc1gpjNJFopSoytPnVH';
 let sock=null;try{if(window.io)sock=io();}catch(e){}
-if(mode==='phone'||mode==='display'){document.body.className=mode;}
-let bc=null;try{bc=new BroadcastChannel('wehne-fa');}catch(e){}
+let bc=null;if(!sock){try{bc=new BroadcastChannel('wehne-tree');}catch(e){}}
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
-/* ---------- shapes (200x200 space) ---------- */
-const SHAPES={
-  gomb:{base(c,col){c.fillStyle=col;c.beginPath();c.arc(100,118,66,0,Math.PI*2);c.fill();},
-        top(c){c.fillStyle='#c9b98f';rr(c,84,40,32,18,4);c.fill();c.strokeStyle='#c9b98f';c.lineWidth=4;c.beginPath();c.arc(100,34,9,Math.PI,0);c.stroke();}},
-  csillag:{base(c,col){c.fillStyle=col;c.beginPath();for(let i=0;i<10;i++){const r=i%2?38:84,a=-Math.PI/2+i*Math.PI/5;c.lineTo(100+r*Math.cos(a),112+r*Math.sin(a));}c.closePath();c.fill();},top(){}},
-  zokni:{base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(66,46);c.lineTo(128,46);c.lineTo(128,112);c.quadraticCurveTo(130,124,144,130);c.lineTo(160,138);c.quadraticCurveTo(184,152,174,172);c.quadraticCurveTo(162,192,136,180);c.lineTo(84,160);c.quadraticCurveTo(60,150,64,124);c.closePath();c.fill();
-        c.fillStyle='rgba(255,255,255,.55)';rr(c,58,26,78,28,12);c.fill();},top(){}},
-  palca:{base(c,col){c.strokeStyle=col;c.lineWidth=32;c.lineCap='round';c.beginPath();c.moveTo(122,178);c.lineTo(122,74);c.quadraticCurveTo(122,30,86,30);c.quadraticCurveTo(50,30,50,66);c.stroke();},top(){}},
-  csengo:{base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(100,40);c.quadraticCurveTo(58,40,56,96);c.quadraticCurveTo(54,140,32,160);c.lineTo(168,160);c.quadraticCurveTo(146,140,144,96);c.quadraticCurveTo(142,40,100,40);c.fill();c.beginPath();c.arc(100,170,13,0,Math.PI*2);c.fill();},
-        top(c){c.strokeStyle='#c9b98f';c.lineWidth=5;c.beginPath();c.arc(100,32,10,Math.PI*0.9,Math.PI*2.1);c.stroke();}},
-  ajandek:{base(c,col){c.fillStyle=col;rr(c,42,80,116,98,8);c.fill();rr(c,34,60,132,28,6);c.fill();},
-        top(c){c.fillStyle='rgba(243,230,200,.92)';c.fillRect(92,60,16,118);c.strokeStyle='rgba(243,230,200,.92)';c.lineWidth=9;
-          c.beginPath();c.ellipse(80,48,20,11,-.4,0,Math.PI*2);c.stroke();c.beginPath();c.ellipse(120,48,20,11,.4,0,Math.PI*2);c.stroke();}}
-};
-const NAMES={gomb:'Gömb',csillag:'Csillag',zokni:'Zokni',palca:'Cukorpálca',csengo:'Csengő',ajandek:'Ajándék'};
+/* ---------- ornament shapes (200x200 space) ---------- */
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+const SHAPES={
+  bauble:{name:'Bauble',base(c,col){c.fillStyle=col;c.beginPath();c.arc(100,118,66,0,Math.PI*2);c.fill();},
+    top(c){c.fillStyle='#c9b98f';rr(c,84,40,32,18,4);c.fill();c.strokeStyle='#c9b98f';c.lineWidth=4;c.beginPath();c.arc(100,34,9,Math.PI,0);c.stroke();}},
+  star:{name:'Star',base(c,col){c.fillStyle=col;c.beginPath();for(let i=0;i<10;i++){const r=i%2?38:84,a=-Math.PI/2+i*Math.PI/5;c.lineTo(100+r*Math.cos(a),112+r*Math.sin(a));}c.closePath();c.fill();},top(){}},
+  stocking:{name:'Stocking',base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(66,46);c.lineTo(128,46);c.lineTo(128,112);c.quadraticCurveTo(130,124,144,130);c.lineTo(160,138);c.quadraticCurveTo(184,152,174,172);c.quadraticCurveTo(162,192,136,180);c.lineTo(84,160);c.quadraticCurveTo(60,150,64,124);c.closePath();c.fill();
+    c.fillStyle='rgba(255,255,255,.55)';rr(c,58,26,78,28,12);c.fill();},top(){}},
+  cane:{name:'Candy cane',base(c,col){c.strokeStyle=col;c.lineWidth=32;c.lineCap='round';c.beginPath();c.moveTo(122,178);c.lineTo(122,74);c.quadraticCurveTo(122,30,86,30);c.quadraticCurveTo(50,30,50,66);c.stroke();},top(){}},
+  bell:{name:'Bell',base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(100,40);c.quadraticCurveTo(58,40,56,96);c.quadraticCurveTo(54,140,32,160);c.lineTo(168,160);c.quadraticCurveTo(146,140,144,96);c.quadraticCurveTo(142,40,100,40);c.fill();c.beginPath();c.arc(100,170,13,0,Math.PI*2);c.fill();},
+    top(c){c.strokeStyle='#c9b98f';c.lineWidth=5;c.beginPath();c.arc(100,32,10,Math.PI*0.9,Math.PI*2.1);c.stroke();}},
+  gift:{name:'Gift',base(c,col){c.fillStyle=col;rr(c,42,80,116,98,8);c.fill();rr(c,34,60,132,28,6);c.fill();},
+    top(c){c.fillStyle='rgba(243,230,200,.92)';c.fillRect(92,60,16,118);c.strokeStyle='rgba(243,230,200,.92)';c.lineWidth=9;
+      c.beginPath();c.ellipse(80,48,20,11,-.4,0,Math.PI*2);c.stroke();c.beginPath();c.ellipse(120,48,20,11,.4,0,Math.PI*2);c.stroke();}}
+};
+const KEYS=Object.keys(SHAPES);
 const BASES=['#c8323c','#e7b84a','#8fb89a','#f3e6c8','#7fa7c9','#9c2f55'];
 const PENS=['#ffffff','#c8323c','#0b1f15','#e7b84a'];
-
-/* render one ornament into ctx of size S */
 function render(ctx,S,shape,baseCol,strokes){
   ctx.save();ctx.clearRect(0,0,S,S);ctx.scale(S/200,S/200);
   SHAPES[shape].base(ctx,baseCol);
-  ctx.globalCompositeOperation='source-atop';
-  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.globalCompositeOperation='source-atop';ctx.lineCap='round';ctx.lineJoin='round';
   for(const s of strokes){ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.beginPath();
     s.pts.forEach((p,i)=>i?ctx.lineTo(p[0]*200,p[1]*200):ctx.moveTo(p[0]*200,p[1]*200));
     if(s.pts.length===1)ctx.lineTo(s.pts[0][0]*200+.1,s.pts[0][1]*200);ctx.stroke();}
-  ctx.globalCompositeOperation='source-over';
-  SHAPES[shape].top(ctx);
-  ctx.restore();
+  ctx.globalCompositeOperation='source-over';SHAPES[shape].top(ctx);ctx.restore();
 }
 
+/* ---------- DISPLAY ---------- */
+const Display=(()=>{
+  const box=$('tree'),countEl=$('count'),MAX=45;let list=[];const seen=new Set();
+  // soft bokeh lights on the tree
+  const bk=$('bokeh'),cols=['#ffd97a','#fff1c9','#ff8f6b','#e7b84a'];let h='';
+  for(let i=0;i<46;i++){const y=160+Math.random()*880,hw=410*(y-90)/990*.92,x=500+(Math.random()*2-1)*hw;
+    h+=`<circle class="bokeh" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(4+Math.random()*9).toFixed(1)}" fill="${cols[i%4]}" style="--t:${(2+Math.random()*3).toFixed(1)}s;--dl:${(-Math.random()*4).toFixed(1)}s"/>`;}
+  bk.innerHTML=h;
+  function inside(){const y=.2+Math.random()*.62;const hw=.4*(y-.1)/.74;return[.5+(Math.random()*2-1)*hw*.92,y];}
+  function slot(){let best=null,bd=-1;for(let i=0;i<50;i++){const p=inside();let d=1;
+    for(const o of list)d=Math.min(d,Math.hypot(o.x-p[0],(o.y-p[1])*1.2));if(d>bd){bd=d;best=p;}if(d>.09)break;}return best;}
+  const rnd=(a,b)=>(a+Math.random()*(b-a)).toFixed(1);
+  function drop(o){o.el.classList.add('gone');setTimeout(()=>o.el.remove(),1000);}
+  function add(msg,quiet){
+    if(msg.id){if(seen.has(msg.id))return;seen.add(msg.id);}
+    if(list.length>=MAX)drop(list.shift());
+    const[x,y]=slot();const el=document.createElement('div');el.className='orn'+(quiet?'':' new');
+    el.style.cssText=`left:${x*100}%;top:${y*100}%;--d:${rnd(9,16)}s;--dl:${rnd(-8,0)}s;--dx:${rnd(-14,14)}%;--dy:${rnd(-10,10)}%;--s:${rnd(3,5.5)}s`;
+    const inner=document.createElement('div');inner.className='in';
+    const img=new Image();img.alt='';img.src=msg.img;if(quiet)img.style.animationDelay=rnd(0,.9)+'s';
+    inner.appendChild(img);el.appendChild(inner);box.appendChild(el);
+    const o={id:msg.id,x,y,el};list.push(o);countEl.textContent=list.length;
+    el.addEventListener('click',()=>{if(document.body.classList.contains('removing'))Admin.remove(o.id,o);});
+  }
+  function remove(id,local){const i=list.findIndex(o=>(id&&o.id===id)||o===local);if(i<0)return;drop(list[i]);list.splice(i,1);countEl.textContent=list.length;}
+  function clear(){list.forEach(drop);list=[];countEl.textContent=0;}
+  if(bc)bc.onmessage=e=>{if(e.data&&e.data.type==='ornament'&&view!=='phone'&&view!=='demo')add(e.data);};
+  if(sock&&view!=='phone'){sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));sock.on('remove',id=>remove(id));sock.on('clear',clear);}
+  return{add,remove,clear};
+})();
+
+/* ---------- ADMIN (projector controls) ---------- */
+const Admin=(()=>{
+  const isAdminView=view==='display'||view==='demo';
+  let authed=!sock; // without a server (demo) everything is local
+  const btn=(id,fn)=>$(id).addEventListener('click',fn);
+  function toggle(cls,id){const on=document.body.classList.toggle(cls);$(id).classList.toggle('on',!on);}
+  function full(){const d=$('display');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else if(d.requestFullscreen)d.requestFullscreen().catch(()=>{});}
+  btn('aFull',full);btn('aTree',()=>toggle('notree','aTree'));btn('aQr',()=>toggle('noqr','aQr'));
+  btn('aRemove',()=>{const on=document.body.classList.toggle('removing');$('aRemove').classList.toggle('on',on);});
+  let armed=0;btn('aClear',()=>{const b=$('aClear');
+    if(Date.now()-armed<3000){armed=0;b.textContent='Clear all';b.classList.remove('warn');if(sock)sock.emit('admin:clear');else Display.clear();}
+    else{armed=Date.now();b.textContent='Click again to clear';b.classList.add('warn');setTimeout(()=>{if(armed&&Date.now()-armed>=3000){b.textContent='Clear all';b.classList.remove('warn');}},3100);}});
+  btn('aOut',()=>{store.set('wehne-admin',null);location.reload();});
+  function remove(id,local){if(sock){if(id)sock.emit('admin:remove',id);}else Display.remove(id,local);}
+  if(isAdminView)addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
+    if(k==='f')full();if(k==='t')toggle('notree','aTree');if(k==='q')toggle('noqr','aQr');if(k==='r')$('aRemove').click();});
+  // auto-hide toolbar + cursor on the projector
+  let t;const wake=()=>{document.body.classList.remove('idle');clearTimeout(t);t=setTimeout(()=>document.body.classList.add('idle'),3000);};
+  if(view==='display'){['mousemove','keydown','touchstart'].forEach(ev=>addEventListener(ev,wake));wake();}
+  // login (only with a server)
+  function auth(pw,cb){sock.emit('admin:auth',pw,r=>cb(!!(r&&r.ok)));}
+  if(view==='display'&&sock){
+    $('aOut').hidden=false;
+    const show=()=>{$('login').classList.add('show');setTimeout(()=>$('pw').focus(),50);};
+    const saved=store.get('wehne-admin');
+    if(saved)auth(saved,ok=>{if(!ok){store.set('wehne-admin',null);show();}});else show();
+    $('loginForm').addEventListener('submit',e=>{e.preventDefault();const pw=$('pw').value;
+      auth(pw,ok=>{if(ok){store.set('wehne-admin',pw);$('login').classList.remove('show');$('err').textContent='';}else $('err').textContent='Wrong password';});});
+    sock.on('connect',()=>{const s=store.get('wehne-admin');if(s)auth(s,()=>{});}); // re-auth after reconnect
+  }
+  return{remove};
+})();
+
+/* ---------- QR ---------- */
+(async()=>{
+  if(view==='phone'||view==='tree')return;
+  let url=ART_URL+'#make';
+  if(sock){try{const c=await (await fetch('/config')).json();url=(c.url||location.origin).replace(/\/$/,'')+'/#make';}catch(e){url=location.origin+'/#make';}}
+  const el=$('qr');
+  if(sock){const im=new Image();im.alt='QR code';im.src='/qr.svg?u='+encodeURIComponent(url);el.appendChild(im);}
+  else if(window.QRCode)new QRCode(el,{text:url,width:256,height:256,colorDark:'#0b1f15',colorLight:'#f3e6c8',correctLevel:QRCode.CorrectLevel.M});
+  $('qrUrl').textContent=url.replace(/^https?:\/\//,'');
+})();
+
 /* ---------- PHONE ---------- */
-const st={shape:'gomb',base:BASES[0],pen:PENS[0],size:6,strokes:[]};
-const cv=document.getElementById('draw'),cx=cv.getContext('2d');
+const st={shape:'bauble',base:BASES[0],pen:PENS[0],size:6,strokes:[]};
+const cv=$('draw'),cx=cv.getContext('2d');
 const redraw=()=>render(cx,600,st.shape,st.base,st.strokes);
-
-const shapesEl=document.getElementById('shapes');
-function go(n){['s1','s2','s3'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i===n-1));
-  document.querySelectorAll('.steps span').forEach(x=>x.classList.toggle('on',+x.dataset.s===n));
-  document.getElementById('phone').scrollTop=0;}
-Object.keys(SHAPES).forEach(k=>{const b=document.createElement('button');const c=document.createElement('canvas');c.width=c.height=160;
-  const t=document.createElement('span');t.textContent=NAMES[k];b.append(c,t);
-  b.onclick=()=>{if(st.shape!==k){st.shape=k;st.strokes=[];}redraw();go(2);};
-  shapesEl.appendChild(b);});
-function thumbs(){[...shapesEl.children].forEach((b,i)=>render(b.firstChild.getContext('2d'),160,Object.keys(SHAPES)[i],BASES[i%BASES.length],[]));}
+function go(n){['s1','s2','s3'].forEach((id,i)=>$(id).classList.toggle('on',i===n-1));
+  document.querySelectorAll('.steps span').forEach(x=>x.classList.toggle('on',+x.dataset.s===n));$('phone').scrollTop=0;}
+const shapesEl=$('shapes');
+KEYS.forEach((k,i)=>{const b=document.createElement('button');const c=document.createElement('canvas');c.width=c.height=160;
+  const t=document.createElement('span');t.textContent=SHAPES[k].name;b.append(c,t);
+  render(c.getContext('2d'),160,k,BASES[i%BASES.length],[]);
+  b.onclick=()=>{if(st.shape!==k){st.shape=k;st.strokes=[];}redraw();go(2);};shapesEl.appendChild(b);});
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.getElementById('p-color').hidden=t.dataset.t!=='color';document.getElementById('p-pen').hidden=t.dataset.t!=='pen';});
-function swatches(el,list,key,cb){list.forEach(col=>{const b=document.createElement('button');b.className='sw';b.style.background=col;
-  b.onclick=()=>{st[key]=col;[...el.querySelectorAll('.sw')].forEach(x=>x.classList.toggle('on',x===b));cb&&cb();};el.appendChild(b);});
-  el.querySelector('.sw').classList.add('on');}
-swatches(document.getElementById('base'),BASES,'base',redraw);
-const pens=document.getElementById('pens');
-swatches(pens,PENS,'pen');
-[['Vékony',6],['Vastag',16]].forEach(([t,v],i)=>{const b=document.createElement('button');b.className='sz'+(i?'':' on');b.textContent=t;
+  $('p-color').hidden=t.dataset.t!=='color';$('p-pen').hidden=t.dataset.t!=='pen';});
+function swatches(el,list,key,cb){list.forEach(col=>{const b=document.createElement('button');b.className='sw';b.style.background=col;b.setAttribute('aria-label',col);
+  b.onclick=()=>{st[key]=col;el.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));cb&&cb();};el.appendChild(b);});el.querySelector('.sw').classList.add('on');}
+swatches($('base'),BASES,'base',redraw);
+const pens=$('pens');swatches(pens,PENS,'pen');
+[['Thin',6],['Thick',16]].forEach(([t,v],i)=>{const b=document.createElement('button');b.className='sz'+(i?'':' on');b.textContent=t;
   b.onclick=()=>{st.size=v;pens.querySelectorAll('.sz').forEach(x=>x.classList.toggle('on',x===b));};pens.appendChild(b);});
-
 let cur=null;
 const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height];};
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);cur={color:st.pen,size:st.size,pts:[pt(e)]};st.strokes.push(cur);redraw();});
 cv.addEventListener('pointermove',e=>{if(!cur)return;cur.pts.push(pt(e));redraw();});
 ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>cur=null));
-document.getElementById('undo').onclick=()=>{st.strokes.pop();redraw();};
-document.getElementById('clear').onclick=()=>{st.strokes=[];redraw();};
-
+$('undo').onclick=()=>{st.strokes.pop();redraw();};
+$('clear').onclick=()=>{st.strokes=[];redraw();};
+$('back1').onclick=()=>go(1);$('back2').onclick=()=>go(2);
 let ready=null;
-document.getElementById('back1').onclick=()=>go(1);
-document.getElementById('back2').onclick=()=>go(2);
-document.getElementById('toPreview').onclick=()=>{
-  const out=document.createElement('canvas');out.width=out.height=300;
-  render(out.getContext('2d'),300,st.shape,st.base,st.strokes);
-  ready=out.toDataURL('image/png');document.getElementById('prevImg').src=ready;go(3);};
-document.getElementById('send').onclick=()=>{
-  const msg={type:'ornament',id:Date.now()+'-'+Math.random().toString(36).slice(2,6),img:ready};
-  if(sock)sock.emit('ornament',{img:ready});
-  else{if(!mode)Display.add(msg);if(bc)bc.postMessage(msg);}
-  document.getElementById('doneImg').src=ready;
-  document.getElementById('done').classList.add('show');
+$('toPreview').onclick=()=>{const out=document.createElement('canvas');out.width=out.height=300;
+  render(out.getContext('2d'),300,st.shape,st.base,st.strokes);ready=out.toDataURL('image/png');$('prevImg').src=ready;go(3);};
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+$('send').onclick=()=>{
+  const showDone=()=>{$('doneImg').src=ready;$('done').classList.add('show');};
+  if(sock){sock.timeout(6000).emit('ornament',{img:ready},(err,r)=>{
+      if(err)toast('No connection – please try again.');else if(!r||!r.ok)toast('One moment… try again in a few seconds.');else showDone();});}
+  else{const msg={type:'ornament',id:Date.now()+'-'+Math.random().toString(36).slice(2,6),img:ready};
+    if(view==='demo')Display.add(msg);if(bc)bc.postMessage(msg);showDone();}
 };
-document.getElementById('again').onclick=()=>{st.strokes=[];document.getElementById('done').classList.remove('show');go(1);};
-thumbs();redraw();go(1);
+$('again').onclick=()=>{st.strokes=[];$('done').classList.remove('show');document.querySelector('.tab[data-t=color]').click();go(1);};
+redraw();go(1);
 
-/* ---------- DISPLAY ---------- */
-const Display=(()=>{
-  const box=document.getElementById('tree'),countEl=document.getElementById('count');
-  const MAX=45;let list=[];
-  // tree area in normalized coords: apex (.5,.16), base y .84, half-width .36 at base
-  function inside(){const y=.2+Math.random()*.62;const hw=.4*(y-.1)/.74;return[.5+(Math.random()*2-1)*hw*.95,y];}
-  function slot(){let best=null,bd=-1;for(let i=0;i<50;i++){const p=inside();let d=1;
-      for(const o of list)d=Math.min(d,Math.hypot(o.x-p[0],(o.y-p[1])*1.2));if(d>bd){bd=d;best=p;}if(d>.09)break;}return best;}
-  const seen=new Set();
-  function add(msg,quiet){
-    if(msg.id){if(seen.has(msg.id))return;seen.add(msg.id);}
-    if(list.length>=MAX){const old=list.shift();old.el.classList.add('gone');setTimeout(()=>old.el.remove(),1000);}
-    const[x,y]=slot();const el=document.createElement('div');el.className='orn'+(quiet?'':' new');
-    el.style.left=x*100+'%';el.style.top=y*100+'%';
-    const img=new Image();img.src=msg.img;if(quiet)img.style.animationDelay=(Math.random()*.8)+'s,'+(1.5+Math.random()*2)+'s';
-    el.appendChild(img);box.appendChild(el);list.push({x,y,el});countEl.textContent=list.length;
-  }
-  function clear(){list.forEach(o=>o.el.remove());list=[];countEl.textContent=0;}
-  if(bc&&!sock)bc.onmessage=e=>{if(e.data&&e.data.type==='ornament'&&mode==='display')add(e.data);};
-  if(sock&&mode!=='phone'){sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));}
-  addEventListener('keydown',e=>{const k=e.key.toLowerCase();
-    if(k==='t')document.body.classList.toggle('dark');
-    if(k==='q')document.body.classList.toggle('noqr');
-    if(k==='f'){const d=document.getElementById('display');(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen?.())?.catch?.(()=>{});}
-    if(k==='c')clear();});
-  return{add};
-})();
-
-/* QR code pointing to the phone page */
-(async function(){
-  if(mode==='phone')return;
-  let url=ART_URL+'#telefon';
-  if(sock){try{const c=await (await fetch('/config')).json();url=(c.url||location.origin).replace(/\/$/,'')+'/#telefon';}catch(e){url=location.origin+'/#telefon';}}
-  const el=document.getElementById('qr');
-  if(sock){const im=new Image();im.alt='QR';im.src='/qr.svg?u='+encodeURIComponent(url);el.appendChild(im);}
-  else if(window.QRCode)new QRCode(el,{text:url,width:256,height:256,colorDark:'#0b1f15',colorLight:'#f3e6c8',correctLevel:QRCode.CorrectLevel.M});
-  document.getElementById('qrUrl').textContent=url.replace(/^https?:\/\//,'');
-})();
-
-/* seed a few ornaments so the tree isn't empty (demo only) */
-if(mode!=='phone'&&!sock){
-  const keys=Object.keys(SHAPES),c=document.createElement('canvas');c.width=c.height=300;const g=c.getContext('2d');
-  for(let i=0;i<9;i++){const strokes=[];const pen=PENS[(i%3===0)?0:(i%2?3:0)];
-    const kind=i%3;
+/* demo seed so the tree isn't empty (no server only) */
+if(!sock&&view!=='phone'){
+  const c=document.createElement('canvas');c.width=c.height=300;const g=c.getContext('2d');
+  for(let i=0;i<9;i++){const strokes=[],pen=PENS[(i%3===0)?0:(i%2?3:0)],kind=i%3;
     if(kind===0)for(let y=.3;y<.9;y+=.14)strokes.push({color:pen,size:7,pts:[[.1,y],[.3,y-.05],[.5,y],[.7,y-.05],[.9,y]]});
-    else if(kind===1)for(let j=0;j<14;j++){const p=[.25+Math.random()*.5,.35+Math.random()*.5];strokes.push({color:pen,size:9,pts:[p]});}
+    else if(kind===1)for(let j=0;j<14;j++)strokes.push({color:pen,size:9,pts:[[.25+Math.random()*.5,.35+Math.random()*.5]]});
     else for(let x=-.2;x<1.2;x+=.18)strokes.push({color:pen,size:10,pts:[[x,.1],[x+.5,.95]]});
-    render(g,300,keys[i%keys.length],BASES[(i*2)%BASES.length],strokes);
-    Display.add({img:c.toDataURL()},true);}
+    render(g,300,KEYS[i%KEYS.length],BASES[(i*2)%BASES.length],strokes);
+    Display.add({id:'seed'+i,img:c.toDataURL()},true);}
 }
-})();
+}
 </script>
 </body>
 </html>

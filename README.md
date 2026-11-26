@@ -1,40 +1,40 @@
-# Interaktív karácsonyfa
+# Decorate the Tree – interaktív karácsonyfa
 
-A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszínezi vagy rárajzol, majd felküldi a fára. A dísz megjelenik a vetített fán. Bejelentkezés nem kell.
-
-## Közzététel ingyen (Render.com), kb. 10 perc
-
-**1. GitHub (ingyenes)**
-1. Regisztrálj a github.com oldalon.
-2. Jobb felül kattints a **+** gombra, majd a **New repository** pontra. Név: `karacsonyfa`, láthatóság: **Public**, végül **Create repository**.
-3. Kattints az **uploading an existing file** linkre, és húzd be a mappa **tartalmát**: `server.js`, `package.json`, `render.yaml`, `.gitignore`, `README.md` és a `public` mappa. A `node_modules` mappát ne töltsd fel. Végül **Commit changes**.
-
-**2. Render (ingyenes)**
-1. Regisztrálj a render.com oldalon a GitHub-fiókoddal.
-2. Válaszd a **New**, majd a **Blueprint** lehetőséget, jelöld ki a `karacsonyfa` repót, és kattints az **Apply** gombra.
-3. Pár perc múlva kész a cím, például: `https://karacsonyfa.onrender.com`
-
-**3. Használat**
-- A projektor gépén nyisd meg: `https://karacsonyfa.onrender.com/#kijelzo`. A QR-kód automatikusan a jó címre mutat.
-- Nyomd meg az **F** billentyűt a teljes képernyőhöz. Ha valódi fára vetítesz, a **T** billentyűvel kapcsold ki a rajzolt fát.
-
-**Az ingyenes csomag korlátai**
-- Ha 15 percig senki sem használja, a szerver elalszik, és az első megnyitás kb. 1 percig tart. Esemény előtt nyisd meg a kijelzőt, utána ébren marad, amíg nyitva van.
-- Ha a szerver újraindul, a fán lévő díszek eltűnnek.
+A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszínezi vagy rárajzol, majd felküldi a fára. A dísz azonnal megjelenik a kivetített fán. A közönségnek nem kell bejelentkeznie. A felület angol nyelvű.
 
 ## Oldalak
-- `/#kijelzo`: a projektor kimenete (fa, díszek, QR-kód)
-- `/#telefon`: a díszkészítő (ide visz a QR-kód)
-- `/`: demó; telefonon automatikusan a díszkészítő jelenik meg
+| Cím | Mire való |
+|---|---|
+| `/#display` | **Kivetítő (admin, jelszóval):** teljes képernyős, élő fa, QR-kód, moderálás |
+| `/#make` | Díszkészítő telefonra (ide visz a QR-kód) |
+| `/#tree` | Nyilvános, csak nézhető fa (pl. telefonon) |
+| `/` | Demó; telefonon automatikusan a díszkészítő jelenik meg |
 
-A kijelzőn használható billentyűk: **T** a fa ki/be, **Q** a QR-kód ki/be, **F** teljes képernyő.
+## Kivetítés
+1. A projektorhoz kötött gépen nyisd meg a `/#display` oldalt, és add meg az admin jelszót. A böngésző megjegyzi.
+2. Az eszköztár akkor jelenik meg, ha megmozdítod az egeret, és 3 mp múlva magától eltűnik, az egérmutatóval együtt:
+   - **Fullscreen (F):** teljes képernyő
+   - **Tree (T):** a rajzolt fa ki/be. Valódi fára vetítéskor kapcsold ki, ilyenkor fekete háttéren csak a díszek látszanak.
+   - **QR (Q):** a QR-kód ki/be
+   - **Remove mode (R):** ilyenkor egy díszre kattintva törlöd azt (moderálás)
+   - **Clear all:** az egész fa törlése (kétszer kell rákattintani)
+
+**TouchDesigner / Syphon / Spout:** a TD **Web Render TOP**-jába írd be a `/#display` címet. Ott kattints bele egyszer, és add meg a jelszót. Ezután a kép TD textúra lesz: mappelheted (Kantan / stoner), effektezheted, vagy Syphon Spout Out TOP-pal továbbküldheted (például Resolume vagy MadMapper felé).
+
+## Közzététel ingyen (Render.com)
+1. Lépj be a render.com oldalra a GitHub-fiókoddal.
+2. Válaszd a **New** → **Blueprint** lehetőséget, és jelöld ki ezt a repót.
+3. A Render kérni fogja az **ADMIN_KEY** értékét. Ez lesz a kivetítő jelszava, írj be egy saját jelszót.
+4. Kattints az **Apply** gombra. Pár perc múlva kész a cím, például `https://karacsonyfa.onrender.com`
+
+Az ingyenes csomag korlátai: 15 perc tétlenség után a szerver elalszik, és az első megnyitás kb. 1 percig tart. Ha a kivetítő oldal nyitva van, a szerver ébren marad. Újraindításkor a fán lévő díszek eltűnnek.
 
 ## Helyi futtatás (Wi-Fin, internet nélkül)
 ```
 npm install
 npm start
 ```
-Ilyenkor a QR-kód a gép helyi IP-címére mutat, és csak az ugyanarra a Wi-Fire csatlakozott telefonok érik el.
+A terminál kiírja a címeket és az admin jelszót. A saját jelszó megadása: `ADMIN_KEY=valami npm start`. Ilyenkor csak az ugyanarra a Wi-Fire csatlakozott telefonok érik el az oldalt.
 
 ## Beállítások (server.js)
 - `MAX = 45`: egyszerre legfeljebb ennyi dísz van a fán

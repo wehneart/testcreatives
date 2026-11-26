@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 3000;
 const MAX = 45;                 // egyszerre ennyi dísz lehet a fán
 const COOLDOWN_MS = 3000;       // egy telefonról max. 3 mp-enként egy dísz
 const FILE = path.join(__dirname, 'ornaments.json');
+// Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
+const ADMIN_KEY = process.env.ADMIN_KEY || Math.random().toString(36).slice(2, 8);
 
 const app = express();
 const server = http.createServer(app);
@@ -60,15 +62,34 @@ io.on('connection', (socket) => {
     last = now;
     const o = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), img: m.img };
     list.push(o);
-    if (list.length > MAX) list.shift();
+    if (list.length > MAX) io.emit('remove', list.shift().id);
     save();
     io.emit('ornament', o);
     if (typeof ack === 'function') ack({ ok: true });
+  });
+
+  // ---- admin (projector) ----
+  socket.on('admin:auth', (key, ack) => {
+    socket.data.admin = typeof key === 'string' && key === ADMIN_KEY;
+    if (typeof ack === 'function') ack({ ok: socket.data.admin });
+  });
+  socket.on('admin:remove', (id) => {
+    if (!socket.data.admin) return;
+    const before = list.length;
+    list = list.filter((o) => o.id !== id);
+    if (list.length !== before) { save(); io.emit('remove', id); }
+  });
+  socket.on('admin:clear', () => {
+    if (!socket.data.admin) return;
+    list = []; save(); io.emit('clear');
   });
 });
 
 server.listen(PORT, () => {
   const base = publicURL();
-  console.log(`\n  Kijelző (projektor):  ${base}/#kijelzo`);
-  console.log(`  Telefon (QR-kód):     ${base}/#telefon\n`);
+  console.log(`\n  Projector (admin):  ${base}/#display`);
+  console.log(`  Phone (QR code):    ${base}/#make`);
+  console.log(`  Public tree view:   ${base}/#tree`);
+  if (!process.env.ADMIN_KEY) console.log(`  Admin password:     ${ADMIN_KEY}   (set ADMIN_KEY to choose your own)`);
+  console.log('');
 });
