@@ -16,7 +16,7 @@ const FILE = path.join(__dirname, 'ornaments.json');
 // Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
 const ADMIN_KEY = process.env.ADMIN_KEY || '12345';
 const SETTINGS = path.join(__dirname, 'settings.json');
-const THEMES = ['classic', 't3d', 'neon', 'real'];
+const THEMES = ['classic', 't3d', 'neon', 'real', 'burning', 'burnt'];
 const AUTO_MS = +process.env.AUTO_MS || 60000; // auto mode: switch tree every minute
 let title = 'Merry Christmas', theme = 'classic', auto = false, autoTimer = null;
 try { const st = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')); title = st.title || title; if (THEMES.includes(st.theme)) theme = st.theme; auto = !!st.auto; } catch (e) {}
