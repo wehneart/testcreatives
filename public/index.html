@@ -473,7 +473,7 @@ const Display=(()=>{
   function remove(id,local){const i=list.findIndex(o=>(id&&o.id===id)||o===local);if(i<0)return;drop(list[i]);list.splice(i,1);countEl.textContent=list.length;}
   function clear(){list.forEach(drop);list=[];countEl.textContent=0;}
   if(bc)bc.addEventListener('message',e=>{if(e.data&&e.data.type==='ornament'&&view!=='phone'&&view!=='demo')add(e.data);});
-  if(sock&&view!=='phone'){sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));sock.on('remove',id=>remove(id));sock.on('clear',clear);}
+  if(sock&&view!=='phone'){sock.on('connect',()=>sock.emit('view'));sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));sock.on('remove',id=>remove(id));sock.on('clear',clear);}
   return{add,remove,clear,onTheme};
 })();
 

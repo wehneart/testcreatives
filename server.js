@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { Server } = require('socket.io');
 const QRCode = require('qrcode');
+const compression = require('compression');
 
 const PORT = process.env.PORT || 3000;
 const MAX = 45;                 // egyszerre ennyi dísz lehet a fán
@@ -32,7 +33,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 1e6 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(compression());
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
 function lanIP() {
   for (const list of Object.values(os.networkInterfaces()))
@@ -66,7 +68,8 @@ io.on('connection', (socket) => {
   socket.emit('title', title);
   socket.emit('theme', theme);
   socket.emit('auto', auto);
-  socket.emit('history', list);
+  // phones (ornament makers) don't need the images; only screens showing the tree do
+  socket.on('view', () => { socket.join('viewers'); socket.emit('history', list); });
   let last = 0;
   socket.on('ornament', (m, ack) => {
     const now = Date.now();
@@ -78,9 +81,9 @@ io.on('connection', (socket) => {
     last = now;
     const o = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), img: m.img };
     list.push(o);
-    if (list.length > MAX) io.emit('remove', list.shift().id);
+    if (list.length > MAX) io.to('viewers').emit('remove', list.shift().id);
     save();
-    io.emit('ornament', o);
+    io.to('viewers').emit('ornament', o);
     if (typeof ack === 'function') ack({ ok: true });
   });
 
