@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#123826">
+<title>Díszítsd a fát</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--bg:#123826;--bg2:#0b2419;--panel:#1a4a33;--cream:#f3e6c8;--red:#c8323c;--gold:#e7b84a;--sage:#8fb89a;--ink:#0b1f15}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg2);color:var(--cream);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+body.demo{display:grid;grid-template-columns:minmax(320px,390px) 1fr;gap:24px;padding:24px}
+body.phone #display,body.display #phone{display:none}
+body.phone #phone{height:100%;border-radius:0}
+body.display #display{height:100%;border-radius:0}
+.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:6px}
+.script{font-family:Georgia,"Times New Roman",serif;font-style:italic}
+
+/* ---------- PHONE ---------- */
+#phone{background:var(--bg);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;position:relative}
+#phone header{text-align:center}
+#phone header h1{font-size:26px;font-weight:400;color:var(--gold)}
+#phone header p{font-size:13px;opacity:.75;margin-top:2px}
+.shapes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.shapes button{background:var(--panel);border-radius:12px;padding:6px;aspect-ratio:1;display:grid;place-items:center;outline:2px solid transparent;transition:outline-color .15s,transform .15s}
+.shapes button.on{outline-color:var(--gold);transform:translateY(-2px)}
+.shapes canvas{width:100%;height:100%}
+.steps{display:flex;justify-content:center;gap:6px;margin-top:8px;font-size:12px}
+.steps span{padding:4px 10px;border-radius:999px;background:var(--panel);opacity:.55}
+.steps span.on{background:var(--gold);color:var(--ink);opacity:1;font-weight:600}
+.step{display:none;flex-direction:column;gap:14px}.step.on{display:flex}
+.lead{text-align:center;font-size:15px;opacity:.85}
+.hint{font-size:12px;opacity:.55;margin-top:6px}
+#s1 .shapes{grid-template-columns:repeat(2,1fr);gap:12px}
+#s1 .shapes button{padding:14px;display:flex;flex-direction:column;gap:6px;aspect-ratio:auto}
+#s1 .shapes button canvas{width:70%;height:auto;aspect-ratio:1}
+#s1 .shapes button span{font-size:14px}
+.tabs{display:flex;background:var(--panel);border-radius:12px;padding:4px}
+.tab{flex:1;padding:9px;border-radius:9px;font-size:14px}.tab.on{background:var(--cream);color:var(--ink);font-weight:600}
+.preview{background:var(--panel);border-radius:18px;aspect-ratio:1;display:grid;place-items:center}
+.preview img{width:72%;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.ghost{padding:10px;font-size:14px;opacity:.8}
+.swap{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;z-index:6;display:none;align-items:center;gap:6px;background:var(--panel);color:var(--cream);border-radius:999px;padding:8px 12px;font-size:13px;min-height:40px}
+#display .swap{background:rgba(243,230,200,.12);backdrop-filter:blur(6px)}
+body.phone #phone .swap,body.display #display .swap{display:flex}
+body.dark #display .swap{opacity:.25}
+.board{background:var(--panel);border-radius:18px;aspect-ratio:1;position:relative;touch-action:none}
+.board canvas{width:100%;height:100%;display:block}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:50%;outline:2px solid transparent;outline-offset:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.sw.on{outline-color:var(--cream)}
+.sz{background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px}
+.sz.on{background:var(--cream);color:var(--ink)}
+.tools{display:flex;gap:8px}
+.tools button{flex:1;background:var(--panel);border-radius:12px;padding:10px;font-size:14px}
+.send{background:var(--gold)!important;color:var(--ink);font-weight:600;border-radius:14px;padding:14px;font-size:16px;width:100%}
+.done{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:30px;border-radius:inherit}
+.done.show{display:flex}
+.done img{width:55%;animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+.done h2{font-size:28px;font-weight:400;color:var(--gold)}
+@keyframes pop{from{transform:scale(.3) rotate(-15deg);opacity:0}}
+
+/* ---------- DISPLAY ---------- */
+#display{background:radial-gradient(ellipse at 50% 35%,#16452f 0%,#0a2015 70%);border-radius:28px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+body.dark #display{background:#000}
+.treebox{position:relative;height:96%;aspect-ratio:1000/1200;max-width:100%}
+.treebox svg{position:absolute;inset:0;width:100%;height:100%;transition:opacity .6s}
+body.dark .treebox svg{opacity:0}
+.title{position:absolute;top:3%;left:4%;font-size:clamp(22px,3.4vw,52px);color:var(--cream);transform:rotate(-6deg);z-index:3}
+body.dark .title,body.dark .meta{opacity:0}
+.meta{position:absolute;bottom:3%;right:3%;font-size:13px;opacity:.6;text-align:right;line-height:1.6;z-index:3}
+.qr{position:absolute;left:3%;bottom:3%;z-index:4;background:var(--cream);color:var(--ink);border-radius:16px;padding:12px;width:clamp(140px,15vw,230px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.qr #qr img,.qr #qr canvas{width:100%!important;height:auto!important;display:block}
+.qr p{font-size:14px;line-height:1.3;margin-top:8px;font-weight:600}
+.qr small{display:block;font-size:11px;opacity:.65;margin-top:4px;word-break:break-all}
+body.noqr .qr{display:none}
+@media (max-width:700px){.qr,#keys{display:none}.title{top:max(14px,env(safe-area-inset-top));font-size:22px}}
+.orn{position:absolute;width:11.5%;transform:translate(-50%,-50%);z-index:2;transition:opacity 1s}
+.orn img{width:100%;display:block;transform-origin:50% 4%;animation:drop 1.5s cubic-bezier(.25,1.3,.4,1) both,sway 3.6s ease-in-out 1.5s infinite alternate}
+.orn::before{content:"";position:absolute;left:50%;top:-14%;width:1px;height:18%;background:rgba(243,230,200,.55)}
+.orn.new::after{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(circle,rgba(255,230,150,.55),transparent 65%);animation:glow 2.4s ease-out 1.2s both;pointer-events:none}
+.orn.gone{opacity:0}
+@keyframes drop{from{transform:translateY(-110vh) rotate(-25deg)}}
+@keyframes sway{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+@keyframes glow{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.6)}}
+.twinkle{animation:tw 2.2s ease-in-out infinite alternate}
+@keyframes tw{from{opacity:.25}to{opacity:1}}
+/* phone mode: one screen, big targets */
+body.phone #phone{height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));gap:10px;overflow:hidden}
+body.phone #phone header h1{font-size:22px}
+body.phone .step{flex:1;min-height:0;gap:10px}
+body.phone #s1 .shapes{flex:1;grid-auto-rows:1fr}
+body.phone #s1 .shapes button canvas{width:auto;height:60%;max-width:70%}
+body.phone .board,body.phone .preview{width:min(100%,46dvh);margin:0 auto;flex:none}
+body.phone .send{margin-top:auto;min-height:52px}
+body.phone .tools button,body.phone .tab{min-height:44px}
+body.phone .sw{width:38px;height:38px}
+body.phone .sz{min-height:38px;padding:8px 14px}
+body.phone .done{border-radius:0}
+</style>
+</head>
+<body class="demo">
+
+<!-- ================= PHONE (controller) ================= -->
+<section id="phone">
+  <button class="swap" data-go="kijelzo" aria-label="A fa megtekintése"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg><span>Fa</span></button>
+  <header>
+    <h1 class="script">Boldog Karácsonyt</h1>
+    <div class="steps"><span data-s="1">1 · Forma</span><span data-s="2">2 · Díszítés</span><span data-s="3">3 · Fel a fára</span></div>
+  </header>
+
+  <!-- STEP 1: pick shape -->
+  <div class="step" id="s1">
+    <p class="lead">Válaszd ki a díszed formáját</p>
+    <div class="shapes" id="shapes"></div>
+  </div>
+
+  <!-- STEP 2: customize -->
+  <div class="step" id="s2">
+    <div class="board"><canvas id="draw" width="600" height="600"></canvas></div>
+    <div class="tabs"><button class="tab on" data-t="color">Szín</button><button class="tab" data-t="pen">Rajz</button></div>
+    <div class="pane" id="p-color"><div class="lbl">A dísz színe</div><div class="row" id="base"></div></div>
+    <div class="pane" id="p-pen" hidden><div class="lbl">Toll színe és vastagsága</div><div class="row" id="pens"></div><p class="hint">Rajzolj ujjal a díszre</p></div>
+    <div class="tools"><button id="back1">← Forma</button><button id="undo">↶ Vissza</button><button id="clear">Törlés</button></div>
+    <button class="send" id="toPreview">Kész vagyok →</button>
+  </div>
+
+  <!-- STEP 3: preview + send -->
+  <div class="step" id="s3">
+    <div class="preview"><img id="prevImg" alt="A díszed"></div>
+    <p class="lead">Így fog kinézni a fán</p>
+    <button class="send" id="send">Felküldöm a fára ✦</button>
+    <button class="ghost" id="back2">← Még módosítok</button>
+  </div>
+
+  <div class="done" id="done">
+    <img id="doneImg" alt="">
+    <h2 class="script">Nézd a fát!</h2>
+    <p style="opacity:.75">A díszed már rajta lóg.</p>
+    <button class="send" id="again" style="width:auto;padding:12px 26px">Új díszt készítek</button>
+    <button class="ghost" data-go="kijelzo" style="display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg>A fa megtekintése</button>
+  </div>
+</section>
+
+<!-- ================= DISPLAY (projector output) ================= -->
+<section id="display">
+  <button class="swap" data-go="telefon" aria-label="Díszt készítek"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span>Díszt készítek</span></button>
+  <div class="title script">Boldog Karácsonyt</div>
+  <div class="treebox" id="tree">
+    <svg viewBox="0 0 1000 1200" aria-hidden="true">
+      <g fill="none" stroke="#f3e6c8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity=".9">
+        <path d="M500 95 L330 380 Q500 350 670 380 Z" fill="#1f5a3c"/>
+        <path d="M500 250 L250 620 Q500 575 750 620 Z" fill="#1b5236"/>
+        <path d="M500 420 L170 880 Q500 820 830 880 Z" fill="#174a30"/>
+        <path d="M500 600 L100 1060 Q500 990 900 1060 Z" fill="#14432b"/>
+        <rect x="455" y="1040" width="90" height="110" rx="8" fill="#6b4a2b"/>
+        <path d="M330 380 Q500 420 670 380 M250 620 Q500 670 750 620 M170 880 Q500 940 830 880" stroke-dasharray="2 22" stroke-width="10" stroke="#e7b84a" class="twinkle"/>
+      </g>
+      <path d="M500 40 l17 36 40 5 -29 28 7 40 -35 -19 -35 19 7 -40 -29 -28 40 -5z" fill="#e7b84a" stroke="#f3e6c8" stroke-width="4"/>
+    </svg>
+  </div>
+  <div class="qr" id="qrBox"><div id="qr"></div><p>Szkenneld be,<br>és díszítsd fel a fát!</p><small id="qrUrl"></small></div>
+  <div class="meta"><span id="count">0</span> dísz a fán<br><span id="keys">T: fa ki/be · Q: QR ki/be · F: teljes képernyő</span></div>
+</section>
+
+<script>
+(function(){
+const params=new URLSearchParams(location.search);
+const h=location.hash.slice(1);
+let mode=(h==='telefon'||params.get('mode')==='phone')?'phone':(h==='kijelzo'||params.get('mode')==='display')?'display':null;
+if(!mode&&matchMedia('(max-width:700px)').matches)mode='phone';
+addEventListener('hashchange',()=>location.reload());
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.go;}));
+const ART_URL='https://claude.ai/artifact/JDdhc1gpjNJFopSoytPnVH';
+let sock=null;try{if(window.io)sock=io();}catch(e){}
+if(mode==='phone'||mode==='display'){document.body.className=mode;}
+let bc=null;try{bc=new BroadcastChannel('wehne-fa');}catch(e){}
+
+/* ---------- shapes (200x200 space) ---------- */
+const SHAPES={
+  gomb:{base(c,col){c.fillStyle=col;c.beginPath();c.arc(100,118,66,0,Math.PI*2);c.fill();},
+        top(c){c.fillStyle='#c9b98f';rr(c,84,40,32,18,4);c.fill();c.strokeStyle='#c9b98f';c.lineWidth=4;c.beginPath();c.arc(100,34,9,Math.PI,0);c.stroke();}},
+  csillag:{base(c,col){c.fillStyle=col;c.beginPath();for(let i=0;i<10;i++){const r=i%2?38:84,a=-Math.PI/2+i*Math.PI/5;c.lineTo(100+r*Math.cos(a),112+r*Math.sin(a));}c.closePath();c.fill();},top(){}},
+  zokni:{base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(66,46);c.lineTo(128,46);c.lineTo(128,112);c.quadraticCurveTo(130,124,144,130);c.lineTo(160,138);c.quadraticCurveTo(184,152,174,172);c.quadraticCurveTo(162,192,136,180);c.lineTo(84,160);c.quadraticCurveTo(60,150,64,124);c.closePath();c.fill();
+        c.fillStyle='rgba(255,255,255,.55)';rr(c,58,26,78,28,12);c.fill();},top(){}},
+  palca:{base(c,col){c.strokeStyle=col;c.lineWidth=32;c.lineCap='round';c.beginPath();c.moveTo(122,178);c.lineTo(122,74);c.quadraticCurveTo(122,30,86,30);c.quadraticCurveTo(50,30,50,66);c.stroke();},top(){}},
+  csengo:{base(c,col){c.fillStyle=col;c.beginPath();c.moveTo(100,40);c.quadraticCurveTo(58,40,56,96);c.quadraticCurveTo(54,140,32,160);c.lineTo(168,160);c.quadraticCurveTo(146,140,144,96);c.quadraticCurveTo(142,40,100,40);c.fill();c.beginPath();c.arc(100,170,13,0,Math.PI*2);c.fill();},
+        top(c){c.strokeStyle='#c9b98f';c.lineWidth=5;c.beginPath();c.arc(100,32,10,Math.PI*0.9,Math.PI*2.1);c.stroke();}},
+  ajandek:{base(c,col){c.fillStyle=col;rr(c,42,80,116,98,8);c.fill();rr(c,34,60,132,28,6);c.fill();},
+        top(c){c.fillStyle='rgba(243,230,200,.92)';c.fillRect(92,60,16,118);c.strokeStyle='rgba(243,230,200,.92)';c.lineWidth=9;
+          c.beginPath();c.ellipse(80,48,20,11,-.4,0,Math.PI*2);c.stroke();c.beginPath();c.ellipse(120,48,20,11,.4,0,Math.PI*2);c.stroke();}}
+};
+const NAMES={gomb:'Gömb',csillag:'Csillag',zokni:'Zokni',palca:'Cukorpálca',csengo:'Csengő',ajandek:'Ajándék'};
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+const BASES=['#c8323c','#e7b84a','#8fb89a','#f3e6c8','#7fa7c9','#9c2f55'];
+const PENS=['#ffffff','#c8323c','#0b1f15','#e7b84a'];
+
+/* render one ornament into ctx of size S */
+function render(ctx,S,shape,baseCol,strokes){
+  ctx.save();ctx.clearRect(0,0,S,S);ctx.scale(S/200,S/200);
+  SHAPES[shape].base(ctx,baseCol);
+  ctx.globalCompositeOperation='source-atop';
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const s of strokes){ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.beginPath();
+    s.pts.forEach((p,i)=>i?ctx.lineTo(p[0]*200,p[1]*200):ctx.moveTo(p[0]*200,p[1]*200));
+    if(s.pts.length===1)ctx.lineTo(s.pts[0][0]*200+.1,s.pts[0][1]*200);ctx.stroke();}
+  ctx.globalCompositeOperation='source-over';
+  SHAPES[shape].top(ctx);
+  ctx.restore();
+}
+
+/* ---------- PHONE ---------- */
+const st={shape:'gomb',base:BASES[0],pen:PENS[0],size:6,strokes:[]};
+const cv=document.getElementById('draw'),cx=cv.getContext('2d');
+const redraw=()=>render(cx,600,st.shape,st.base,st.strokes);
+
+const shapesEl=document.getElementById('shapes');
+function go(n){['s1','s2','s3'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i===n-1));
+  document.querySelectorAll('.steps span').forEach(x=>x.classList.toggle('on',+x.dataset.s===n));
+  document.getElementById('phone').scrollTop=0;}
+Object.keys(SHAPES).forEach(k=>{const b=document.createElement('button');const c=document.createElement('canvas');c.width=c.height=160;
+  const t=document.createElement('span');t.textContent=NAMES[k];b.append(c,t);
+  b.onclick=()=>{if(st.shape!==k){st.shape=k;st.strokes=[];}redraw();go(2);};
+  shapesEl.appendChild(b);});
+function thumbs(){[...shapesEl.children].forEach((b,i)=>render(b.firstChild.getContext('2d'),160,Object.keys(SHAPES)[i],BASES[i%BASES.length],[]));}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.getElementById('p-color').hidden=t.dataset.t!=='color';document.getElementById('p-pen').hidden=t.dataset.t!=='pen';});
+function swatches(el,list,key,cb){list.forEach(col=>{const b=document.createElement('button');b.className='sw';b.style.background=col;
+  b.onclick=()=>{st[key]=col;[...el.querySelectorAll('.sw')].forEach(x=>x.classList.toggle('on',x===b));cb&&cb();};el.appendChild(b);});
+  el.querySelector('.sw').classList.add('on');}
+swatches(document.getElementById('base'),BASES,'base',redraw);
+const pens=document.getElementById('pens');
+swatches(pens,PENS,'pen');
+[['Vékony',6],['Vastag',16]].forEach(([t,v],i)=>{const b=document.createElement('button');b.className='sz'+(i?'':' on');b.textContent=t;
+  b.onclick=()=>{st.size=v;pens.querySelectorAll('.sz').forEach(x=>x.classList.toggle('on',x===b));};pens.appendChild(b);});
+
+let cur=null;
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height];};
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);cur={color:st.pen,size:st.size,pts:[pt(e)]};st.strokes.push(cur);redraw();});
+cv.addEventListener('pointermove',e=>{if(!cur)return;cur.pts.push(pt(e));redraw();});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>cur=null));
+document.getElementById('undo').onclick=()=>{st.strokes.pop();redraw();};
+document.getElementById('clear').onclick=()=>{st.strokes=[];redraw();};
+
+let ready=null;
+document.getElementById('back1').onclick=()=>go(1);
+document.getElementById('back2').onclick=()=>go(2);
+document.getElementById('toPreview').onclick=()=>{
+  const out=document.createElement('canvas');out.width=out.height=300;
+  render(out.getContext('2d'),300,st.shape,st.base,st.strokes);
+  ready=out.toDataURL('image/png');document.getElementById('prevImg').src=ready;go(3);};
+document.getElementById('send').onclick=()=>{
+  const msg={type:'ornament',id:Date.now()+'-'+Math.random().toString(36).slice(2,6),img:ready};
+  if(sock)sock.emit('ornament',{img:ready});
+  else{if(!mode)Display.add(msg);if(bc)bc.postMessage(msg);}
+  document.getElementById('doneImg').src=ready;
+  document.getElementById('done').classList.add('show');
+};
+document.getElementById('again').onclick=()=>{st.strokes=[];document.getElementById('done').classList.remove('show');go(1);};
+thumbs();redraw();go(1);
+
+/* ---------- DISPLAY ---------- */
+const Display=(()=>{
+  const box=document.getElementById('tree'),countEl=document.getElementById('count');
+  const MAX=45;let list=[];
+  // tree area in normalized coords: apex (.5,.16), base y .84, half-width .36 at base
+  function inside(){const y=.2+Math.random()*.62;const hw=.4*(y-.1)/.74;return[.5+(Math.random()*2-1)*hw*.95,y];}
+  function slot(){let best=null,bd=-1;for(let i=0;i<50;i++){const p=inside();let d=1;
+      for(const o of list)d=Math.min(d,Math.hypot(o.x-p[0],(o.y-p[1])*1.2));if(d>bd){bd=d;best=p;}if(d>.09)break;}return best;}
+  const seen=new Set();
+  function add(msg,quiet){
+    if(msg.id){if(seen.has(msg.id))return;seen.add(msg.id);}
+    if(list.length>=MAX){const old=list.shift();old.el.classList.add('gone');setTimeout(()=>old.el.remove(),1000);}
+    const[x,y]=slot();const el=document.createElement('div');el.className='orn'+(quiet?'':' new');
+    el.style.left=x*100+'%';el.style.top=y*100+'%';
+    const img=new Image();img.src=msg.img;if(quiet)img.style.animationDelay=(Math.random()*.8)+'s,'+(1.5+Math.random()*2)+'s';
+    el.appendChild(img);box.appendChild(el);list.push({x,y,el});countEl.textContent=list.length;
+  }
+  function clear(){list.forEach(o=>o.el.remove());list=[];countEl.textContent=0;}
+  if(bc&&!sock)bc.onmessage=e=>{if(e.data&&e.data.type==='ornament'&&mode==='display')add(e.data);};
+  if(sock&&mode!=='phone'){sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));}
+  addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+    if(k==='t')document.body.classList.toggle('dark');
+    if(k==='q')document.body.classList.toggle('noqr');
+    if(k==='f'){const d=document.getElementById('display');(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen?.())?.catch?.(()=>{});}
+    if(k==='c')clear();});
+  return{add};
+})();
+
+/* QR code pointing to the phone page */
+(async function(){
+  if(mode==='phone')return;
+  let url=ART_URL+'#telefon';
+  if(sock){try{const c=await (await fetch('/config')).json();url=(c.url||location.origin).replace(/\/$/,'')+'/#telefon';}catch(e){url=location.origin+'/#telefon';}}
+  const el=document.getElementById('qr');
+  if(sock){const im=new Image();im.alt='QR';im.src='/qr.svg?u='+encodeURIComponent(url);el.appendChild(im);}
+  else if(window.QRCode)new QRCode(el,{text:url,width:256,height:256,colorDark:'#0b1f15',colorLight:'#f3e6c8',correctLevel:QRCode.CorrectLevel.M});
+  document.getElementById('qrUrl').textContent=url.replace(/^https?:\/\//,'');
+})();
+
+/* seed a few ornaments so the tree isn't empty (demo only) */
+if(mode!=='phone'&&!sock){
+  const keys=Object.keys(SHAPES),c=document.createElement('canvas');c.width=c.height=300;const g=c.getContext('2d');
+  for(let i=0;i<9;i++){const strokes=[];const pen=PENS[(i%3===0)?0:(i%2?3:0)];
+    const kind=i%3;
+    if(kind===0)for(let y=.3;y<.9;y+=.14)strokes.push({color:pen,size:7,pts:[[.1,y],[.3,y-.05],[.5,y],[.7,y-.05],[.9,y]]});
+    else if(kind===1)for(let j=0;j<14;j++){const p=[.25+Math.random()*.5,.35+Math.random()*.5];strokes.push({color:pen,size:9,pts:[p]});}
+    else for(let x=-.2;x<1.2;x+=.18)strokes.push({color:pen,size:10,pts:[[x,.1],[x+.5,.95]]});
+    render(g,300,keys[i%keys.length],BASES[(i*2)%BASES.length],strokes);
+    Display.add({img:c.toDataURL()},true);}
+}
+})();
+</script>
+</body>
+</html>
