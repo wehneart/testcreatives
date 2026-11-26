@@ -17,7 +17,7 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
    - **Tree (T):** a rajzolt fa ki/be. Valódi fára vetítéskor kapcsold ki, ilyenkor fekete háttéren csak a díszek látszanak.
    - **QR (Q):** a QR-kód ki/be
    - **Remove mode (R):** ilyenkor egy díszre kattintva törlöd azt (moderálás)
-   - **Classic / 3D / Neon / Real (1–4):** a fa típusa. *Classic:* elmosott, fénylő fa. *3D:* körbeforgó, spirálban feltekert arany fényfüzér-fa sötét, fénycsíkos folyosóban; a díszek is körbejárnak. *Real:* valósághű kékeszöld lucfenyő égősorral, kőudvaron. *Neon:* neontábla-stílusú fa téglafalon (rózsaszín cső, futófényes füzérek, hópelyhek, narancs csillag), lassan jobbra-balra fordul térben. A váltás minden kijelzőn egyszerre történik.
+   - **Classic / 3D / Neon / Real (1–4):** a fa típusa. *Classic:* elmosott, fénylő fa. *3D:* körbeforgó, spirálban feltekert arany fényfüzér-fa sötét, fénycsíkos folyosóban; a díszek is körbejárnak. *Real:* a fotóból kivágott valódi lucfenyő (public/real-tree.webp), az izzók a saját helyükön pislákolnak, kőudvaron. *Neon:* neontábla-stílusú fa téglafalon (rózsaszín cső, futófényes füzérek, hópelyhek, narancs csillag), lassan jobbra-balra fordul térben. A váltás minden kijelzőn egyszerre történik.
    - **Auto (1 min) (A):** bekapcsolva percenként vált a következő fára, áttűnéssel. Minden kijelzőn egyszerre.
    - **Edit title:** a „Merry Christmas” felirat átírása (pl. „Feliz Navidad”). Minden kijelzőn és telefonon azonnal frissül.
    - **Clear all:** az egész fa törlése (kétszer kell rákattintani)
