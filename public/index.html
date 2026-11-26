@@ -127,7 +127,8 @@ body.noqr .qr{display:none!important}
 
 /* admin */
 .admin{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:8;display:none;gap:6px;background:rgba(10,31,21,.85);backdrop-filter:blur(8px);padding:6px;border-radius:14px;transition:opacity .4s;flex-wrap:wrap;justify-content:center;max-width:95%}
-body[data-view=display] .admin,body[data-view=demo] .admin{display:flex}
+body[data-view=display] .admin,body[data-view=demo]:not(.srv) .admin{display:flex}
+body.srv[data-view=demo] #display .swap.adm{display:flex}
 .admin button{padding:8px 12px;border-radius:10px;font-size:13px;background:rgba(243,230,200,.08)}
 .admin button.on{background:var(--cream);color:var(--ink)}
 .tform{display:flex;gap:6px;width:100%;justify-content:center}
@@ -195,6 +196,7 @@ body.removing .orn:hover img{outline:3px dashed var(--red);outline-offset:4px;bo
 <!-- ================= DISPLAY (projector) ================= -->
 <section id="display">
   <button class="swap" data-go="make" aria-label="Make an ornament"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span>Make an ornament</span></button>
+  <button class="swap adm" data-go="display">Projector (admin)</button>
   <div class="admin" id="admin">
     <button id="aFull">Fullscreen</button>
     <button id="aTitle">Edit title</button>
@@ -283,6 +285,7 @@ addEventListener('hashchange',()=>location.reload());
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.go;}));
 const ART_URL='https://claude.ai/artifact/JDdhc1gpjNJFopSoytPnVH';
 let sock=null;try{if(window.io)sock=io();}catch(e){}
+if(sock)document.body.classList.add('srv');
 let bc=null;if(!sock){try{bc=new BroadcastChannel('wehne-tree');}catch(e){}}
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
@@ -418,6 +421,7 @@ if(bc)bc.addEventListener('message',e=>{if(e.data&&e.data.type==='theme')setThem
 const Admin=(()=>{
   const isAdminView=view==='display'||view==='demo';
   let authed=!sock; // without a server (demo) everything is local
+  const need=()=>{if(authed)return false;if(view!=='display')location.hash='display';else $('login').classList.add('show');return true;};
   const btn=(id,fn)=>$(id).addEventListener('click',fn);
   function toggle(cls,id){const on=document.body.classList.toggle(cls);$(id).classList.toggle('on',!on);}
   function full(){const d=$('display');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else if(d.requestFullscreen)d.requestFullscreen().catch(()=>{});}
@@ -428,7 +432,7 @@ const Admin=(()=>{
     else{armed=Date.now();b.textContent='Click again to clear';b.classList.add('warn');setTimeout(()=>{if(armed&&Date.now()-armed>=3000){b.textContent='Clear all';b.classList.remove('warn');}},3100);}});
   btn('aOut',()=>{store.set('wehne-admin',null);location.reload();});
   document.querySelectorAll('[data-th]').forEach(b=>b.addEventListener('click',()=>pickTheme(b.dataset.th)));
-  function pickTheme(t){if(sock)sock.emit('admin:theme',t);else{setTheme(t);if(bc)bc.postMessage({type:'theme',theme:t});}}
+  function pickTheme(t){if(need())return;if(sock)sock.emit('admin:theme',t);else{setTheme(t);if(bc)bc.postMessage({type:'theme',theme:t});}}
   const tf=$('titleForm'),ti=$('titleIn');
   const closeT=()=>{tf.hidden=true;document.body.classList.remove('editing');};
   btn('aTitle',()=>{ti.value=document.querySelector('.title').textContent;tf.hidden=false;document.body.classList.add('editing');ti.focus();ti.select();});
@@ -447,10 +451,10 @@ const Admin=(()=>{
     $('aOut').hidden=false;
     const show=()=>{$('login').classList.add('show');setTimeout(()=>$('pw').focus(),50);};
     const saved=store.get('wehne-admin');
-    if(saved)auth(saved,ok=>{if(!ok){store.set('wehne-admin',null);show();}});else show();
+    if(saved)auth(saved,ok=>{authed=ok;if(!ok){store.set('wehne-admin',null);show();}});else show();
     $('loginForm').addEventListener('submit',e=>{e.preventDefault();const pw=$('pw').value;
-      auth(pw,ok=>{if(ok){store.set('wehne-admin',pw);$('login').classList.remove('show');$('err').textContent='';}else $('err').textContent='Wrong password';});});
-    sock.on('connect',()=>{const s=store.get('wehne-admin');if(s)auth(s,()=>{});}); // re-auth after reconnect
+      auth(pw,ok=>{authed=ok;if(ok){store.set('wehne-admin',pw);$('login').classList.remove('show');$('err').textContent='';}else $('err').textContent='Wrong password';});});
+    sock.on('connect',()=>{const s=store.get('wehne-admin');if(s)auth(s,ok=>{authed=ok;});}); // re-auth after reconnect
   }
   return{remove};
 })();
