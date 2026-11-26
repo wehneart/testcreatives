@@ -13,7 +13,10 @@ const MAX = 45;                 // egyszerre ennyi dísz lehet a fán
 const COOLDOWN_MS = 3000;       // egy telefonról max. 3 mp-enként egy dísz
 const FILE = path.join(__dirname, 'ornaments.json');
 // Admin password for the projector page (/#display). Set ADMIN_KEY on Render; locally a random one is printed.
-const ADMIN_KEY = process.env.ADMIN_KEY || Math.random().toString(36).slice(2, 8);
+const ADMIN_KEY = process.env.ADMIN_KEY || '12345';
+const SETTINGS = path.join(__dirname, 'settings.json');
+let title = 'Merry Christmas';
+try { title = JSON.parse(fs.readFileSync(SETTINGS, 'utf8')).title || title; } catch (e) {}
 
 const app = express();
 const server = http.createServer(app);
@@ -50,6 +53,7 @@ function save() {
 }
 
 io.on('connection', (socket) => {
+  socket.emit('title', title);
   socket.emit('history', list);
   let last = 0;
   socket.on('ornament', (m, ack) => {
@@ -79,6 +83,14 @@ io.on('connection', (socket) => {
     list = list.filter((o) => o.id !== id);
     if (list.length !== before) { save(); io.emit('remove', id); }
   });
+  socket.on('admin:title', (t) => {
+    if (!socket.data.admin || typeof t !== 'string') return;
+    t = t.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60);
+    if (!t) return;
+    title = t;
+    fs.writeFile(SETTINGS, JSON.stringify({ title }), () => {});
+    io.emit('title', title);
+  });
   socket.on('admin:clear', () => {
     if (!socket.data.admin) return;
     list = []; save(); io.emit('clear');
@@ -90,6 +102,6 @@ server.listen(PORT, () => {
   console.log(`\n  Projector (admin):  ${base}/#display`);
   console.log(`  Phone (QR code):    ${base}/#make`);
   console.log(`  Public tree view:   ${base}/#tree`);
-  if (!process.env.ADMIN_KEY) console.log(`  Admin password:     ${ADMIN_KEY}   (set ADMIN_KEY to choose your own)`);
+  console.log(`  Admin password:     ${ADMIN_KEY}`);
   console.log('');
 });

@@ -17,6 +17,7 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
    - **Tree (T):** a rajzolt fa ki/be. Valódi fára vetítéskor kapcsold ki, ilyenkor fekete háttéren csak a díszek látszanak.
    - **QR (Q):** a QR-kód ki/be
    - **Remove mode (R):** ilyenkor egy díszre kattintva törlöd azt (moderálás)
+   - **Edit title:** a „Merry Christmas” felirat átírása (pl. „Feliz Navidad”). Minden kijelzőn és telefonon azonnal frissül.
    - **Clear all:** az egész fa törlése (kétszer kell rákattintani)
 
 **TouchDesigner / Syphon / Spout:** a TD **Web Render TOP**-jába írd be a `/#display` címet. Ott kattints bele egyszer, és add meg a jelszót. Ezután a kép TD textúra lesz: mappelheted (Kantan / stoner), effektezheted, vagy Syphon Spout Out TOP-pal továbbküldheted (például Resolume vagy MadMapper felé).
@@ -24,7 +25,7 @@ A közönség beolvassa a QR-kódot, a telefonján kiválaszt egy díszt, kiszí
 ## Közzététel ingyen (Render.com)
 1. Lépj be a render.com oldalra a GitHub-fiókoddal.
 2. Válaszd a **New** → **Blueprint** lehetőséget, és jelöld ki ezt a repót.
-3. A Render kérni fogja az **ADMIN_KEY** értékét. Ez lesz a kivetítő jelszava, írj be egy saját jelszót.
+3. A kivetítő jelszava alapból **12345**. Ha meg akarod változtatni, a Renderen: Environment → `ADMIN_KEY`.
 4. Kattints az **Apply** gombra. Pár perc múlva kész a cím, például `https://karacsonyfa.onrender.com`
 
 Az ingyenes csomag korlátai: 15 perc tétlenség után a szerver elalszik, és az első megnyitás kb. 1 percig tart. Ha a kivetítő oldal nyitva van, a szerver ébren marad. Újraindításkor a fán lévő díszek eltűnnek.
@@ -34,7 +35,7 @@ Az ingyenes csomag korlátai: 15 perc tétlenség után a szerver elalszik, és 
 npm install
 npm start
 ```
-A terminál kiírja a címeket és az admin jelszót. A saját jelszó megadása: `ADMIN_KEY=valami npm start`. Ilyenkor csak az ugyanarra a Wi-Fire csatlakozott telefonok érik el az oldalt.
+A terminál kiírja a címeket és az admin jelszót (alapból `12345`). Ilyenkor csak az ugyanarra a Wi-Fire csatlakozott telefonok érik el az oldalt.
 
 ## Beállítások (server.js)
 - `MAX = 45`: egyszerre legfeljebb ennyi dísz van a fán

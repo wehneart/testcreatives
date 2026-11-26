@@ -110,6 +110,10 @@ body.noqr .qr{display:none!important}
 body[data-view=display] .admin,body[data-view=demo] .admin{display:flex}
 .admin button{padding:8px 12px;border-radius:10px;font-size:13px;background:rgba(243,230,200,.08)}
 .admin button.on{background:var(--cream);color:var(--ink)}
+.tform{display:flex;gap:6px;width:100%;justify-content:center}
+.tform[hidden]{display:none}
+.tform input{font:inherit;font-size:15px;padding:7px 10px;border-radius:10px;border:1px solid rgba(243,230,200,.35);background:var(--bg2);color:var(--cream);width:min(320px,60vw)}
+body.editing .admin{opacity:1!important;pointer-events:auto!important}
 .admin button.warn{background:var(--red)}
 body.idle .admin{opacity:0;pointer-events:none}
 body.idle[data-view=display]{cursor:none}
@@ -131,7 +135,7 @@ body.removing .orn:hover img{outline:3px dashed var(--red);outline-offset:4px;bo
 <section id="phone">
   <button class="swap" data-go="tree" aria-label="See the tree"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 6.5 9h3L5 15h4l-4 5h14l-4-5h4l-4.5-6h3z"/><path d="M12 20v2.5"/></svg><span>Tree</span></button>
   <header>
-    <h1 class="script">Merry Christmas</h1>
+    <h1 class="script ttl">Merry Christmas</h1>
     <div class="steps"><span data-s="1">1 · Shape</span><span data-s="2">2 · Decorate</span><span data-s="3">3 · Hang it</span></div>
   </header>
 
@@ -171,13 +175,15 @@ body.removing .orn:hover img{outline:3px dashed var(--red);outline-offset:4px;bo
   <button class="swap" data-go="make" aria-label="Make an ornament"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span>Make an ornament</span></button>
   <div class="admin" id="admin">
     <button id="aFull">Fullscreen</button>
+    <button id="aTitle">Edit title</button>
     <button id="aTree" class="on">Tree</button>
     <button id="aQr" class="on">QR</button>
     <button id="aRemove">Remove mode</button>
     <button id="aClear">Clear all</button>
     <button id="aOut" hidden>Log out</button>
+    <form id="titleForm" class="tform" hidden><input id="titleIn" maxlength="60" aria-label="Title text"><button type="submit" class="on">Save</button><button type="button" id="titleCancel">Cancel</button></form>
   </div>
-  <div class="title script">Merry Christmas</div>
+  <div class="title script ttl">Merry Christmas</div>
   <div class="treebox" id="tree">
     <svg viewBox="0 0 1000 1200" aria-hidden="true">
       <defs>
@@ -257,6 +263,11 @@ function render(ctx,S,shape,baseCol,strokes){
   ctx.globalCompositeOperation='source-over';SHAPES[shape].top(ctx);ctx.restore();
 }
 
+/* ---------- shared title ---------- */
+function setTitle(t){if(typeof t!=='string'||!t)return;document.querySelectorAll('.ttl').forEach(el=>el.textContent=t);document.title=t;}
+if(sock)sock.on('title',setTitle);
+if(bc)bc.addEventListener('message',e=>{if(e.data&&e.data.type==='title')setTitle(e.data.text);});
+
 /* ---------- DISPLAY ---------- */
 const Display=(()=>{
   const box=$('tree'),countEl=$('count'),MAX=45;let list=[];const seen=new Set();
@@ -283,7 +294,7 @@ const Display=(()=>{
   }
   function remove(id,local){const i=list.findIndex(o=>(id&&o.id===id)||o===local);if(i<0)return;drop(list[i]);list.splice(i,1);countEl.textContent=list.length;}
   function clear(){list.forEach(drop);list=[];countEl.textContent=0;}
-  if(bc)bc.onmessage=e=>{if(e.data&&e.data.type==='ornament'&&view!=='phone'&&view!=='demo')add(e.data);};
+  if(bc)bc.addEventListener('message',e=>{if(e.data&&e.data.type==='ornament'&&view!=='phone'&&view!=='demo')add(e.data);});
   if(sock&&view!=='phone'){sock.on('history',a=>a.forEach(m=>add(m,true)));sock.on('ornament',m=>add(m));sock.on('remove',id=>remove(id));sock.on('clear',clear);}
   return{add,remove,clear};
 })();
@@ -301,6 +312,12 @@ const Admin=(()=>{
     if(Date.now()-armed<3000){armed=0;b.textContent='Clear all';b.classList.remove('warn');if(sock)sock.emit('admin:clear');else Display.clear();}
     else{armed=Date.now();b.textContent='Click again to clear';b.classList.add('warn');setTimeout(()=>{if(armed&&Date.now()-armed>=3000){b.textContent='Clear all';b.classList.remove('warn');}},3100);}});
   btn('aOut',()=>{store.set('wehne-admin',null);location.reload();});
+  const tf=$('titleForm'),ti=$('titleIn');
+  const closeT=()=>{tf.hidden=true;document.body.classList.remove('editing');};
+  btn('aTitle',()=>{ti.value=document.querySelector('.title').textContent;tf.hidden=false;document.body.classList.add('editing');ti.focus();ti.select();});
+  btn('titleCancel',closeT);
+  tf.addEventListener('submit',e=>{e.preventDefault();const v=ti.value.trim().slice(0,60);if(!v)return;
+    if(sock)sock.emit('admin:title',v);else{setTitle(v);if(bc)bc.postMessage({type:'title',text:v});}closeT();});
   function remove(id,local){if(sock){if(id)sock.emit('admin:remove',id);}else Display.remove(id,local);}
   if(isAdminView)addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();
     if(k==='f')full();if(k==='t')toggle('notree','aTree');if(k==='q')toggle('noqr','aQr');if(k==='r')$('aRemove').click();});

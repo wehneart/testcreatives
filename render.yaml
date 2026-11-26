@@ -8,4 +8,4 @@ services:
     healthCheckPath: /config
     envVars:
       - key: ADMIN_KEY
-        sync: false
+        value: "12345"
